@@ -13,6 +13,13 @@ from input_class import (
 from main import create_aaroot_meta_ins
 from meta_class import InputMetadata, create_input_meta_ins
 
+FN_SPLITTER = "-"
+INPUT_DIR, INPUT_EXT = "../input_data/dat_files", ".dat"
+# INPUT_DIR, INPUT_EXT = (
+#     "C:/Users/jt/code/crop-growth-planning-vf/data",
+#     ".dat",
+# )
+
 
 def shelf_id_str(idx: int) -> str:
     return f"s_{idx}"
@@ -285,23 +292,17 @@ def generate_p_ins_from_dat(
 
 def main():
     start_d = datetime.datetime.now()
-    fn_splitter = "-"
-    input_foldername, input_ext = "../input_data/dat_files", ".dat"
-    # input_foldername, input_ext = (
-    #     "C:/Users/jt/code/crop-growth-planning-vf/data",
-    #     ".dat",
-    # )
-    input_meta: InputMetadata = create_input_meta_ins(create_aaroot_meta_ins())
 
+    input_meta: InputMetadata = create_input_meta_ins(create_aaroot_meta_ins())
     output_foldername, output_ext = input_meta.input_dir(), input_meta.input_ext
     output_encoding = input_meta.encoding
 
     convert_dat_to_json(
-        PurePath(input_foldername),
-        input_ext,
+        PurePath(INPUT_DIR),
+        INPUT_EXT,
         PurePath(output_foldername),
         output_ext,
-        fn_splitter,
+        FN_SPLITTER,
         output_encoding,
     )
 
