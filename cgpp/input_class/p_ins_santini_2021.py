@@ -1,18 +1,8 @@
+from dataclasses import dataclass
 from typing import Any
 
 
-def shelf_id_str(idx: int) -> str:
-    return f"s_{idx}"
-
-
-def shelf_type_str(idx: int) -> str:
-    return f"st_{idx}"
-
-
-def config_id_str(idx: int) -> str:
-    return f"cfg_{idx}"
-
-
+@dataclass(kw_only=True)
 class ProbInsS21:
     # instance name information
     n_shelves: int
@@ -22,6 +12,9 @@ class ProbInsS21:
     demand_mult: float  # demand multiplier
     id: int  # instance id
     model_type: str
+
+    crop_id_list: list[str]
+    config_id_list: list[str]
 
     # instance data
     # crop ID -> growth days
@@ -59,16 +52,8 @@ class ProbInsS21:
         self.id = id
         self.model_type = model_type
 
-    def create_crop_id(self):
-        self.crop_id_list: list[str] = [char for char in self.crop_id_string]
-
     def create_t_list(self):
         self.t_list: list[int] = [t for t in range(self.n_days)]
-
-    def create_config_id(self):
-        self.config_id_list: list[str] = [
-            config_id_str(idx) for idx in range(self.n_configurations)
-        ]
 
     def make_val_dict(self) -> dict[str, Any]:
         return_dict: dict[str, Any] = dict()
@@ -82,14 +67,11 @@ class ProbInsS21:
         return return_dict
 
 
+@dataclass(kw_only=True)
 class ProbInsS21T1(ProbInsS21):
+    shelf_id_list: list[str]
     # crop ID -> shelf ID -> compatibility
     crop_shelf_compatible: dict[str, dict[str, bool]]
-
-    def create_shelf_id(self):
-        self.shelf_id_list: list[str] = [
-            shelf_id_str(idx) for idx in range(self.n_shelves)
-        ]
 
     def make_val_dict(self) -> dict[str, Any]:
         return_dict: dict[str, Any] = super().make_val_dict()
@@ -115,36 +97,21 @@ class ProbInsS21T1(ProbInsS21):
         return return_dict
 
 
+@dataclass(kw_only=True)
 class ProbInsS21T2(ProbInsS21):
     n_shelf_types: int
-    # TODO: create shelf type list
-    # shelf ID -> the number of shelves
+    shelf_type_list: list[str]
+    # shelf type -> the number of shelves
     num_shelves: dict[str, int]
+    shelf_id_dict: dict[str, list[str]]
     # crop ID -> shelf type -> compatibility
     crop_shelf_type_compatible: dict[str, dict[str, bool]]
-
-    def create_shelf_type(self):
-        self.shelf_type_list: list[str] = [
-            shelf_type_str(idx) for idx in range(self.n_shelf_types)
-        ]
 
     def check_integrity(self):
         if self.n_shelves != sum(self.num_shelves.values()):
             _str = f"The number of all shelves {self.n_shelves} != the sum of the"
             _str += f" number of all types of shelves {sum(self.num_shelves.values())}"
             raise ValueError(_str)
-
-    def create_shelf_id(self):
-        self.shelf_id_dict: dict[str, list[str]] = {
-            shelf_type: list() for shelf_type in self.shelf_type_list
-        }
-        idx = 0
-        for shelf_type in self.shelf_type_list:
-            shelf_type_count = self.num_shelves[shelf_type]
-            self.shelf_id_dict[shelf_type].extend(
-                [shelf_id_str(n + idx) for n in range(shelf_type_count)]
-            )
-            idx += shelf_type_count
 
     @property
     def shelf_id_list(self):
@@ -180,6 +147,7 @@ class ProbInsS21T2(ProbInsS21):
         return return_dict
 
 
+@dataclass(kw_only=True)
 class ProbInsS21T3(ProbInsS21T2):
     # crop ID -> day -> missed demand penalty
     missed_demand_penalty: dict[str, dict[int, int]]

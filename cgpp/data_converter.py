@@ -9,10 +9,21 @@ from input_class import (
     ProbInsS21T1,
     ProbInsS21T2,
     ProbInsS21T3,
-    config_id_str,
-    shelf_id_str,
-    shelf_type_str,
 )
+from main import create_aaroot_meta_ins
+from meta_class import InputMetadata, create_input_meta_ins
+
+
+def shelf_id_str(idx: int) -> str:
+    return f"s_{idx}"
+
+
+def shelf_type_str(idx: int) -> str:
+    return f"st_{idx}"
+
+
+def config_id_str(idx: int) -> str:
+    return f"cfg_{idx}"
 
 
 def from_file_to_dict(
@@ -35,6 +46,7 @@ def convert_dat_to_json(
     fn_splitter: str,
     output_encoding: str,
 ):
+    Path(output_dir).mkdir(parents=True, exist_ok=True)
     for p_ins in generate_p_ins_from_dat(input_dir, input_ext, fn_splitter):
         fn = p_ins.problem_name + output_ext
         dump_dict = p_ins.make_json_dump_dict()
@@ -100,127 +112,173 @@ def generate_p_ins_from_dat(
                     input_dict["missed_demand_penalty"]
                 )
 
-        # Problem instance
-        p_ins: ProbInsS21
-        if model_type == "s":
-            p_ins = ProbInsS21T1()
-        elif model_type == "st":
-            p_ins = ProbInsS21T2()
-        else:
-            p_ins = ProbInsS21T3()
-
-        # instance name information
-        p_ins.info_from_filename(
-            int(n_shelves_fn),
-            int(n_crops_fn),
-            crop_id_string,
-            int(n_days_fn),
-            float(demand_mult),
-            int(id),
-            model_type,
-        )
-
         # crop information
-        if n_crops != p_ins.n_crops:
+        if n_crops != int(n_crops_fn):
             print(
                 UserWarning(
-                    f"n_crops of filename {p_ins.n_crops} != n_crops of data {n_crops}"
+                    f"n_crops of filename {int(n_crops_fn)} != n_crops of data {n_crops}"
                 )
             )
             continue
-        p_ins.create_crop_id()
 
-        if n_days != p_ins.n_days:
+        if n_days != int(n_days_fn):
             print(
                 UserWarning(
-                    f"n_days of filename {p_ins.n_days} != n_days of data {n_days}"
+                    f"n_days of filename {int(n_days_fn)} != n_days of data {n_days}"
                 )
             )
             continue
-        p_ins.create_t_list()
 
-        p_ins.crop_growth_days = dict()
-        for c_index, crop_id in enumerate(p_ins.crop_id_list):
-            p_ins.crop_growth_days[crop_id] = crop_growth_days[c_index]
+        crop_id_list = [char for char in crop_id_string]
+        config_id_list = [config_id_str(idx) for idx in range(n_configurations)]
+        t_list = [t for t in range(n_days)]
 
-        p_ins.n_configurations = n_configurations
-        p_ins.create_config_id()
+        crop_growth_days_dict = dict()
+        for c_index, crop_id in enumerate(crop_id_list):
+            crop_growth_days_dict[crop_id] = crop_growth_days[c_index]
 
-        p_ins.crop_growth_day_config = dict()
-        p_ins.demand = dict()
-        for c_index, crop_id in enumerate(p_ins.crop_id_list):
-            p_ins.crop_growth_day_config[crop_id] = [
+        cgdc_dict: dict[str, list[str]] = dict()
+        demand_dict = dict()
+        for c_index, crop_id in enumerate(crop_id_list):
+            cgdc_dict[crop_id] = [
                 config_id_str(crop_growth_day_config[c_index][growth_day])
-                for growth_day in range(p_ins.crop_growth_days[crop_id])
+                for growth_day in range(crop_growth_days_dict[crop_id])
                 if crop_growth_day_config[c_index][growth_day] != -1
             ]
-            p_ins.demand[crop_id] = {
+            demand_dict[crop_id] = {
                 demand_day: demand[c_index][demand_day]
-                for demand_day in p_ins.t_list
+                for demand_day in t_list
                 if demand[c_index][demand_day] > 0
             }
 
+        # instance to be returned
+        p_ins: ProbInsS21
+
         # shelf information
-        p_ins.capacity = dict()
+        capa_dict: dict[str, dict[str, int]] = dict()
         if model_type == "s":
-            if n_shelves != p_ins.n_shelves:
+            if n_shelves != int(n_shelves_fn):
                 print(
                     UserWarning(
-                        f"n_shelves of filename {p_ins.n_shelves} != n_shelves of data {n_shelves}"
+                        f"n_shelves of filename {n_shelves_fn} != n_shelves of data {n_shelves}"
                     )
                 )
                 continue
-            p_ins.create_shelf_id()
-            p_ins.crop_shelf_compatible = {
-                crop_id: dict() for crop_id in p_ins.crop_id_list
+            shelf_id_list: list[str] = [shelf_id_str(idx) for idx in range(n_shelves)]
+            csc_dict: dict[str, dict[str, bool]] = {
+                crop_id: dict() for crop_id in crop_id_list
             }
-            for s_index, shelf_id in enumerate(p_ins.shelf_id_list):
-                for c_index, crop_id in enumerate(p_ins.crop_id_list):
-                    p_ins.crop_shelf_compatible[crop_id][shelf_id] = (
+            for s_index, shelf_id in enumerate(shelf_id_list):
+                for c_index, crop_id in enumerate(crop_id_list):
+                    csc_dict[crop_id][shelf_id] = (
                         crop_shelf_compatible[c_index][s_index] == 1
                     )
 
-                p_ins.capacity[shelf_id] = dict()
-                for cfg_index, config_id in enumerate(p_ins.config_id_list):
-                    p_ins.capacity[shelf_id][config_id] = capacity[s_index][cfg_index]
+                capa_dict[shelf_id] = dict()
+                for cfg_index, config_id in enumerate(config_id_list):
+                    capa_dict[shelf_id][config_id] = capacity[s_index][cfg_index]
+            p_ins = ProbInsS21T1(
+                n_shelves=n_shelves,
+                n_crops=n_crops,
+                crop_id_string=crop_id_string,
+                n_days=n_days,
+                demand_mult=float(demand_mult),
+                id=int(id),
+                model_type=model_type,
+                crop_id_list=crop_id_list,
+                config_id_list=config_id_list,
+                crop_growth_days=crop_growth_days_dict,
+                n_configurations=n_configurations,
+                crop_growth_day_config=cgdc_dict,
+                capacity=capa_dict,
+                demand=demand_dict,
+                shelf_id_list=shelf_id_list,
+                crop_shelf_compatible=csc_dict,
+            )
         else:
-            p_ins.n_shelf_types = n_shelf_types
-            p_ins.create_shelf_type()
-
-            p_ins.num_shelves = dict()
-            for st_index, shelf_type in enumerate(p_ins.shelf_type_list):
-                p_ins.num_shelves[shelf_type] = num_shelves[st_index]
-            try:
-                p_ins.check_integrity()
-            except ValueError:
-                continue
-
-            p_ins.crop_shelf_type_compatible = {
-                crop_id: dict() for crop_id in p_ins.crop_id_list
+            shelf_type_list: list[str] = [
+                shelf_type_str(idx) for idx in range(n_shelf_types)
+            ]
+            shelf_id_dict: dict[str, list[str]] = {
+                shelf_type: list() for shelf_type in shelf_type_list
             }
-            for st_index, shelf_type in enumerate(p_ins.shelf_type_list):
-                for c_index, crop_id in enumerate(p_ins.crop_id_list):
-                    p_ins.crop_shelf_type_compatible[crop_id][shelf_type] = (
+            ns_dict = dict()
+            for st_index, shelf_type in enumerate(shelf_type_list):
+                ns_dict[shelf_type] = num_shelves[st_index]
+
+            idx = 0
+            for shelf_type in shelf_type_list:
+                shelf_type_count = ns_dict[shelf_type]
+                shelf_id_dict[shelf_type].extend(
+                    [shelf_id_str(n + idx) for n in range(shelf_type_count)]
+                )
+                idx += shelf_type_count
+
+            cstc_dict: dict[str, dict[str, bool]] = {
+                crop_id: dict() for crop_id in crop_id_list
+            }
+            for st_index, shelf_type in enumerate(shelf_type_list):
+                for c_index, crop_id in enumerate(crop_id_list):
+                    cstc_dict[crop_id][shelf_type] = (
                         crop_shelf_type_compatible[c_index][st_index] == 1
                     )
 
-                p_ins.capacity[shelf_type] = dict()
-                for cfg_index, config_id in enumerate(p_ins.config_id_list):
-                    p_ins.capacity[shelf_type][config_id] = capacity[st_index][
-                        cfg_index
-                    ]
+                capa_dict[shelf_type] = dict()
+                for cfg_index, config_id in enumerate(config_id_list):
+                    capa_dict[shelf_type][config_id] = capacity[st_index][cfg_index]
 
-            p_ins.create_shelf_id()
             if model_type == "st_pen":
-                p_ins.missed_demand_penalty = dict()
-                for c_index, crop_id in enumerate(p_ins.crop_id_list):
-                    p_ins.missed_demand_penalty[crop_id] = dict()
-                    for demand_day in p_ins.t_list:
+                mdp_dict: dict[str, dict[int, int]] = dict()
+                for c_index, crop_id in enumerate(crop_id_list):
+                    mdp_dict[crop_id] = dict()
+                    for demand_day in t_list:
                         penalty_val = missed_demand_penalty[c_index][demand_day]
                         if penalty_val > 0:
-                            p_ins.missed_demand_penalty[crop_id][
-                                demand_day
-                            ] = penalty_val
+                            mdp_dict[crop_id][demand_day] = penalty_val
+                p_ins = ProbInsS21T3(
+                    n_shelves=n_shelves,
+                    n_crops=n_crops,
+                    crop_id_string=crop_id_string,
+                    n_days=n_days,
+                    demand_mult=float(demand_mult),
+                    id=int(id),
+                    model_type=model_type,
+                    crop_id_list=crop_id_list,
+                    config_id_list=config_id_list,
+                    crop_growth_days=crop_growth_days_dict,
+                    n_configurations=n_configurations,
+                    crop_growth_day_config=cgdc_dict,
+                    capacity=capa_dict,
+                    demand=demand_dict,
+                    n_shelf_types=n_shelf_types,
+                    shelf_type_list=shelf_type_list,
+                    num_shelves=ns_dict,
+                    shelf_id_dict=shelf_id_dict,
+                    crop_shelf_type_compatible=cstc_dict,
+                    missed_demand_penalty=mdp_dict,
+                )
+            else:
+                p_ins = ProbInsS21T2(
+                    n_shelves=n_shelves,
+                    n_crops=n_crops,
+                    crop_id_string=crop_id_string,
+                    n_days=n_days,
+                    demand_mult=float(demand_mult),
+                    id=int(id),
+                    model_type=model_type,
+                    crop_id_list=crop_id_list,
+                    config_id_list=config_id_list,
+                    crop_growth_days=crop_growth_days_dict,
+                    n_configurations=n_configurations,
+                    crop_growth_day_config=cgdc_dict,
+                    capacity=capa_dict,
+                    demand=demand_dict,
+                    n_shelf_types=n_shelf_types,
+                    shelf_type_list=shelf_type_list,
+                    num_shelves=ns_dict,
+                    shelf_id_dict=shelf_id_dict,
+                    crop_shelf_type_compatible=cstc_dict,
+                )
 
         yield p_ins
 
@@ -233,8 +291,10 @@ def main():
     #     "C:/Users/jt/code/crop-growth-planning-vf/data",
     #     ".dat",
     # )
-    output_foldername, output_ext = "../input_data/json_files", ".json"
-    output_encoding = "utf-8"
+    input_meta: InputMetadata = create_input_meta_ins(create_aaroot_meta_ins())
+
+    output_foldername, output_ext = input_meta.input_dir(), input_meta.input_ext
+    output_encoding = input_meta.encoding
 
     convert_dat_to_json(
         PurePath(input_foldername),

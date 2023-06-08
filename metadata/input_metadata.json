@@ -1,0 +1,11 @@
+{
+    "encoding": "utf-8",
+    "directory": "input_data/json_files",
+    "input_ext": ".json",
+    "fn_splitter": "-",
+    "model_type_t1": "s",
+    "model_type_t2": "st",
+    "model_type_t3": "st_pen",
+    "solver_name": "CBC_MIXED_INTEGER_PROGRAMMING",
+    "timelimit": 3600
+}
