@@ -52,8 +52,8 @@ class ProbInsS21:
         self.id = id
         self.model_type = model_type
 
-    def create_t_list(self):
-        self.t_list: list[int] = [t for t in range(self.n_days)]
+    def create_t_idx_list(self):
+        self.t_idx_list: list[int] = [t + 1 for t in range(self.n_days)]
 
     def make_val_dict(self) -> dict[str, Any]:
         return_dict: dict[str, Any] = dict()

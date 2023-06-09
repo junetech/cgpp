@@ -137,8 +137,8 @@ def generate_p_ins_from_dat(
             continue
 
         crop_id_list = [char for char in crop_id_string]
-        config_id_list = [config_id_str(idx) for idx in range(n_configurations)]
-        t_list = [t for t in range(n_days)]
+        config_id_list = [config_id_str(idx + 1) for idx in range(n_configurations)]
+        t_list = [t + 1 for t in range(n_days)]
 
         crop_growth_days_dict = dict()
         for c_index, crop_id in enumerate(crop_id_list):
@@ -154,7 +154,7 @@ def generate_p_ins_from_dat(
             ]
             demand_dict[crop_id] = {
                 demand_day: demand[c_index][demand_day]
-                for demand_day in t_list
+                for demand_day in range(n_days)
                 if demand[c_index][demand_day] > 0
             }
 
@@ -171,7 +171,9 @@ def generate_p_ins_from_dat(
                     )
                 )
                 continue
-            shelf_id_list: list[str] = [shelf_id_str(idx) for idx in range(n_shelves)]
+            shelf_id_list: list[str] = [
+                shelf_id_str(idx + 1) for idx in range(n_shelves)
+            ]
             csc_dict: dict[str, dict[str, bool]] = {
                 crop_id: dict() for crop_id in crop_id_list
             }
@@ -204,7 +206,7 @@ def generate_p_ins_from_dat(
             )
         else:
             shelf_type_list: list[str] = [
-                shelf_type_str(idx) for idx in range(n_shelf_types)
+                shelf_type_str(idx + 1) for idx in range(n_shelf_types)
             ]
             shelf_id_dict: dict[str, list[str]] = {
                 shelf_type: list() for shelf_type in shelf_type_list
@@ -217,7 +219,7 @@ def generate_p_ins_from_dat(
             for shelf_type in shelf_type_list:
                 shelf_type_count = ns_dict[shelf_type]
                 shelf_id_dict[shelf_type].extend(
-                    [shelf_id_str(n + idx) for n in range(shelf_type_count)]
+                    [shelf_id_str(n + idx + 1) for n in range(shelf_type_count)]
                 )
                 idx += shelf_type_count
 
@@ -238,7 +240,7 @@ def generate_p_ins_from_dat(
                 mdp_dict: dict[str, dict[int, int]] = dict()
                 for c_index, crop_id in enumerate(crop_id_list):
                     mdp_dict[crop_id] = dict()
-                    for demand_day in t_list:
+                    for demand_day in range(n_days):
                         penalty_val = missed_demand_penalty[c_index][demand_day]
                         if penalty_val > 0:
                             mdp_dict[crop_id][demand_day] = penalty_val
