@@ -54,6 +54,14 @@ class ProbInsS21:
 
     def create_t_idx_list(self):
         self.t_idx_list: list[int] = [t + 1 for t in range(self.n_days)]
+        # crop id -> growth day -> configuration required
+        self.crop_growth_day_config_dict: dict[str, dict[int, int]] = {
+            crop_id: {
+                idx + 1: val
+                for idx, val in enumerate(self.crop_growth_day_config[crop_id])
+            }
+            for crop_id in self.crop_id_list
+        }
 
     def make_val_dict(self) -> dict[str, Any]:
         return_dict: dict[str, Any] = dict()
@@ -64,6 +72,16 @@ class ProbInsS21:
         return_dict["demand_mult"] = self.demand_mult
         return_dict["id"] = self.id
         return_dict["model_type"] = self.model_type
+        return return_dict
+
+    def make_demand_dict(self) -> dict[str, dict[int, int]]:
+        return_dict = {
+            crop_id: {t_idx: 0 for t_idx in self.t_idx_list}
+            for crop_id in self.crop_id_list
+        }
+        for crop_id, t_idx_dict in self.demand.items():
+            for t_idx, demand in t_idx_dict.items():
+                return_dict[crop_id][t_idx] = demand
         return return_dict
 
 
@@ -166,3 +184,47 @@ class ProbInsS21T3(ProbInsS21T2):
         return_dict["config_id_list"] = self.config_id_list
 
         return return_dict
+
+
+def from_t1_to_t2(p_ins_t1: ProbInsS21T1) -> ProbInsS21T2:
+    n_shelves = p_ins_t1.n_shelves
+    n_crops = p_ins_t1.n_crops
+    crop_id_string = p_ins_t1.crop_id_string
+    n_days = p_ins_t1.n_days
+    demand_mult = p_ins_t1.demand_mult
+    id = p_ins_t1.id
+    model_type = p_ins_t1.model_type
+    crop_id_list = p_ins_t1.crop_id_list
+    config_id_list = p_ins_t1.config_id_list
+    crop_growth_days_dict = p_ins_t1.crop_growth_days
+    n_configurations = p_ins_t1.n_configurations
+    cgdc_dict = p_ins_t1.crop_growth_day_config
+    capa_dict = p_ins_t1.capacity
+    demand_dict = p_ins_t1.demand
+    n_shelf_types = 1
+    shelf_type_list = p_ins_t1.shelf_id_list
+    ns_dict = {shelf_id: 1 for shelf_id in p_ins_t1.shelf_id_list}
+    shelf_id_dict = {shelf_id: [shelf_id] for shelf_id in p_ins_t1.shelf_id_list}
+    cstc_dict = p_ins_t1.crop_shelf_compatible
+
+    return ProbInsS21T2(
+        n_shelves=n_shelves,
+        n_crops=n_crops,
+        crop_id_string=crop_id_string,
+        n_days=n_days,
+        demand_mult=demand_mult,
+        id=id,
+        model_type=model_type,
+        crop_id_list=crop_id_list,
+        config_id_list=config_id_list,
+        crop_growth_days=crop_growth_days_dict,
+        n_configurations=n_configurations,
+        crop_growth_day_config=cgdc_dict,
+        capacity=capa_dict,
+        demand=demand_dict,
+        n_shelf_types=n_shelf_types,
+        shelf_type_list=shelf_type_list,
+        num_shelves=ns_dict,
+        shelf_id_dict=shelf_id_dict,
+        crop_shelf_type_compatible=cstc_dict,
+    )
