@@ -4,6 +4,7 @@ from itertools import product
 from input_class import ProbInsS21T3
 from ortools.linear_solver.linear_solver_natural_api import SumArray
 from ortools.linear_solver.pywraplp import Solver
+from output_class import VariablesObj3
 
 
 def t_list_before(t: int, t_list: list[int]) -> list[int]:
@@ -138,36 +139,59 @@ def solve_santini_21_milp_t3(p_ins: ProbInsS21T3, solver_name: str, timelimit: i
         solver.Add(SumArray(y[t][d][k] for k in k_list) == n_dict[t])
 
     obj_val: float = 0.0
-    solution = dict()
+    solution = VariablesObj3()
     # solve
     solver.set_time_limit(timelimit * 1000)
-    phase = solver.Solve()
+    status = solver.Solve()
     wall_sec = solver.wall_time() / 1000
 
-    _str: str = "solver phase log placeholder"
-    if phase == Solver.OPTIMAL:
+    _str: str = "solver status log placeholder"
+    if status == Solver.OPTIMAL:
         _str = (
             f"*Optimal* objective value = {solver.Objective().Value()}\t"
             + f"found in {wall_sec:.3f} seconds"
         )
-    elif phase == Solver.FEASIBLE:
+    elif status == Solver.FEASIBLE:
         _str = (
             f"An incumbent objective value = {solver.Objective().Value()}\t"
             + f"and best bound = {solver.Objective().BestBound()}\t"
             + f"found in {wall_sec:.3f} seconds"
         )
-    elif phase == Solver.INFEASIBLE:
+    elif status == Solver.INFEASIBLE:
         _str = f"The problem is found to be infeasible in {wall_sec:.3f} seconds"
-    elif phase == Solver.UNBOUNDED:
+    elif status == Solver.UNBOUNDED:
         _str = f"The problem is found to be unbounded in {wall_sec:.3f} seconds"
-    elif phase == Solver.NOT_SOLVED:
+    elif status == Solver.NOT_SOLVED:
         _str = f"No solution found in {wall_sec:.3f} seconds"
     logging.info(_str)
 
-    if phase == Solver.OPTIMAL or phase == Solver.FEASIBLE:
+    if status == Solver.OPTIMAL or status == Solver.FEASIBLE:
         obj_val = solver.Objective().Value()
         _str = f"Problem solved in {solver.iterations()} iterations"
         _str += f" & {solver.nodes()} branch-and-bound nodes"
         logging.info(_str)
+        solution.x = {
+            c: {
+                g: {
+                    t1: {
+                        d: {
+                            t2: x[c][g][t1][d][t2].solution_value()
+                            for t2 in T_prime_dict[c]
+                        }
+                        for d in d_prime_list
+                    }
+                    for t1 in T_prime_dict[c]
+                }
+                for g in range(gamma_dict[c] + 1)
+            }
+            for c in c_list
+        }
+        solution.y = {
+            t: {d: {k: y[t][d][k].solution_value() for k in k_list} for d in d_list}
+            for t in t_list
+        }
+        solution.u = {
+            c: {d: u[c][d].solution_value() for d in full_d_list} for c in c_list
+        }
 
     return obj_val, solution

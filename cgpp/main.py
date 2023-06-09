@@ -44,7 +44,7 @@ def solve_one_prob_ins(
     timelimit: int,
 ):
     logging.info(p_ins.problem_name)
-    schedule_by_santini_21_milp(p_ins, solver_name, timelimit)
+    schedule_by_santini_21_milp(p_ins, solver_name, timelimit, output_meta)
 
 
 def read_and_solve_all(root_meta: AaRootMetadata):

@@ -155,3 +155,4 @@ cython_debug/
 .vscode/
 input_data/dat_files/
 input_data/json_files/
+*.xlsx
