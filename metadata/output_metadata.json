@@ -7,5 +7,7 @@
     "first_col_wth": 9,
     "sch_col_wth": 5.5,
     "schedule_sheetname": "Schedule",
-    "shelf_config_sheetname": "ShelfCfg"
+    "shelf_config_sheetname": "ShelfCfg",
+    "germination_sheetname": "Germination",
+    "harvest_sheetname": "Harvest"
 }

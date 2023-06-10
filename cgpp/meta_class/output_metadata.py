@@ -15,6 +15,8 @@ class OutputMetadata:
 
     schedule_sheetname: str
     shelf_config_sheetname: str
+    germination_sheetname: str
+    harvest_sheetname: str
 
     def set_base_dir(self, meta_dir: PurePath):
         self._base_dir = meta_dir
