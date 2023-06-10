@@ -62,6 +62,10 @@ class ProbInsS21:
             }
             for crop_id in self.crop_id_list
         }
+        self.demand = {
+            crop_id: {int(t_idx): val for t_idx, val in t_idx_dict.items()}
+            for crop_id, t_idx_dict in self.demand.items()
+        }
 
     def make_val_dict(self) -> dict[str, Any]:
         return_dict: dict[str, Any] = dict()
@@ -184,6 +188,13 @@ class ProbInsS21T3(ProbInsS21T2):
         return_dict["config_id_list"] = self.config_id_list
 
         return return_dict
+
+    def create_t_idx_list(self):
+        super().create_t_idx_list()
+        self.missed_demand_penalty = {
+            crop_id: {int(t_idx): val for t_idx, val in t_idx_dict.items()}
+            for crop_id, t_idx_dict in self.missed_demand_penalty.items()
+        }
 
 
 def from_t1_to_t2(p_ins_t1: ProbInsS21T1) -> ProbInsS21T2:
