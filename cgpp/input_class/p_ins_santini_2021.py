@@ -63,7 +63,7 @@ class ProbInsS21:
             for crop_id in self.crop_id_list
         }
         self.demand = {
-            crop_id: {int(t_idx): val for t_idx, val in t_idx_dict.items()}
+            crop_id: {int(t_idx): val for t_idx, val in t_idx_dict.items() if val > 0}
             for crop_id, t_idx_dict in self.demand.items()
         }
 
@@ -87,6 +87,12 @@ class ProbInsS21:
             for t_idx, demand in t_idx_dict.items():
                 return_dict[crop_id][t_idx] = demand
         return return_dict
+
+    def make_last_demand_date_dict(self) -> dict[str, int]:
+        return {
+            crop_id: max(t_idx_dict.keys())
+            for crop_id, t_idx_dict in self.demand.items()
+        }
 
 
 @dataclass(kw_only=True)
