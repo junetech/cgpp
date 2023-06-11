@@ -177,74 +177,88 @@ def make_santini_21_sch_xlsx(
 
     # Crop information worksheets
     cursor["row"] = 2
-    for shelf_id in T_list:
+    for crop_id in C_list:
         cursor["row"] += 1
         for ws in crop_ws_list:
-            ws.cell(**cursor).value = shelf_id
-            for c_idx, cfg_id in enumerate(shelf_config_dict[shelf_id]):
-                if cfg_id is None:
-                    continue
-                col = cursor["column"] + 1 + c_idx
-                ws.cell(column=col, row=cursor["row"]).value = cfg_id
-
+            ws.cell(**cursor).value = crop_id
         row_key_list: list[str] = list()
         grm_row_list_dict: dict[str, list[int]] = dict()  # row_key -> row_list
         sch_row_list_dict: dict[str, list[int]] = dict()  # row_key -> row_list
         hv_row_list_dict: dict[str, list[int]] = dict()  # row_key -> row_list
 
-        for crop_id in C_list:
-            if shelf_id not in T_prime_dict[crop_id]:
-                continue
-            for t_idx in D_list:
+        for t_idx in D_list:
+            for shelf_id in T_list:
+                if shelf_id not in T_prime_dict[crop_id]:
+                    continue
                 # the crop germinated on the shelf type at t_idx
                 # grows from t_idx + 1 to t_idx + gamma_dict[crop_id]
                 # harvested at t_idx + gamma_dict[crop_id] + 1
-                row_key = f"{crop_id}_{t_idx}"
                 grm_row_list = [0] * (p_ins.n_days + 1)
-                sch_row_list = [0] * (p_ins.n_days + 1)
+                _sch_row_list_dict = dict()
                 hv_row_list = [0] * (p_ins.n_days + 1)
 
                 # germination
                 grm_unit_count = int(solution.x[crop_id][0][sigma][t_idx][shelf_id])
+                cfg_id = k_dict[crop_id][1]
+                first_row_key = f"{t_idx}-{cfg_id}-{shelf_id}"
                 if grm_unit_count > 0:
                     grm_row_list[t_idx] = grm_unit_count
 
                 # growth
-                for g in range(1, gamma_dict[crop_id] + 1):
-                    growth_t_idx = t_idx + g
+                for g_idx in range(1, gamma_dict[c] + 1):
+                    growth_t_idx = t_idx + g_idx
                     if growth_t_idx > p_ins.n_days - 1:
-                        continue
+                        break
+                    cfg_id = k_dict[crop_id][g_idx]
                     crop_unit_count = sum(
-                        int(solution.x[crop_id][g][shelf_id][growth_t_idx][t2])
+                        int(solution.x[crop_id][g_idx][shelf_id][growth_t_idx][t2])
                         for t2 in T_prime_dict[crop_id]
                     )
+                    row_key = f"{t_idx}-{cfg_id}-{shelf_id}"
                     if crop_unit_count > 0:
-                        sch_row_list[growth_t_idx] = crop_unit_count
+                        if row_key not in _sch_row_list_dict:
+                            _sch_row_list_dict[row_key] = [0] * (p_ins.n_days + 1)
+                        _sch_row_list_dict[row_key][growth_t_idx] = crop_unit_count
 
                 # harvest at the due date
                 harvest_t_idx = t_idx + gamma_dict[crop_id] + 1
+                hv_unit_count = 0
                 if harvest_t_idx <= p_ins.n_days - 1:
                     hv_unit_count = int(
                         solution.x[crop_id][gamma_dict[c]][shelf_id][harvest_t_idx - 1][
                             tau
                         ]
                     )
-                    if hv_unit_count > 0:
-                        hv_row_list[harvest_t_idx] = hv_unit_count
+                cfg_id = k_dict[crop_id][gamma_dict[c]]
+                last_row_key = f"{t_idx}-{cfg_id}-{shelf_id}"
+                if hv_unit_count > 0:
+                    hv_row_list[harvest_t_idx] = hv_unit_count
 
                 # do not write rows only with 0
-                if sum(grm_row_list) + sum(sch_row_list) + sum(hv_row_list) == 0:
+                if (
+                    sum(grm_row_list)
+                    + sum(sum(value) for value in _sch_row_list_dict.values())
+                    + sum(hv_row_list)
+                    == 0
+                ):
                     continue
-                if row_key not in row_key_list:
-                    row_key_list.append(row_key)
-                grm_row_list_dict[row_key] = grm_row_list
-                sch_row_list_dict[row_key] = sch_row_list
-                hv_row_list_dict[row_key] = hv_row_list
+                for row_key, row_list in _sch_row_list_dict.items():
+                    if row_key not in row_key_list:
+                        row_key_list.append(row_key)
+                    sch_row_list_dict[row_key] = row_list
+                grm_row_list_dict[first_row_key] = grm_row_list
+                hv_row_list_dict[last_row_key] = hv_row_list
 
         for row_key in row_key_list:
             sch_row_list = sch_row_list_dict[row_key]
-            grm_row_list = grm_row_list_dict[row_key]
-            hv_row_list = hv_row_list_dict[row_key]
+            if row_key in grm_row_list_dict:
+                grm_row_list = grm_row_list_dict[row_key]
+            else:
+                grm_row_list = [0] * (p_ins.n_days + 1)
+            if row_key in hv_row_list_dict:
+                hv_row_list = hv_row_list_dict[row_key]
+            else:
+                hv_row_list = [0] * (p_ins.n_days + 1)
 
             cursor["row"] += 1
             for ws in crop_ws_list:

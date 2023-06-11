@@ -20,7 +20,6 @@ class ProbInsS21:
     # crop ID -> growth days
     crop_growth_days: dict[str, int]
     n_configurations: int
-    # TODO: create configuration ID list
     # crop ID -> list of required configuration for each growth day
     crop_growth_day_config: dict[str, list[str]]
     # shelf ID (type) -> configuration ID -> capaciity
@@ -55,7 +54,7 @@ class ProbInsS21:
     def create_t_idx_list(self):
         self.t_idx_list: list[int] = [t + 1 for t in range(self.n_days)]
         # crop id -> growth day -> configuration required
-        self.crop_growth_day_config_dict: dict[str, dict[int, int]] = {
+        self.crop_growth_day_config_dict: dict[str, dict[int, str]] = {
             crop_id: {
                 idx + 1: val
                 for idx, val in enumerate(self.crop_growth_day_config[crop_id])
