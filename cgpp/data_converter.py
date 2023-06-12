@@ -2,6 +2,7 @@ import ast
 import datetime
 import json
 import logging
+import sys
 from pathlib import Path, PurePath
 from typing import Iterable
 
@@ -77,6 +78,10 @@ def convert_dat_to_json(
             )
         conversion_count += 1
     logging.info(f"{conversion_count} files converted")
+    logging.info(f"The number of crops: {N_CROPS_COUNT}")
+    logging.info(f"The capacity by shelves: {N_SHELVES_COUNT}")
+    logging.info(f"Demand multipliers: {DEMAND_MULT_COUNT}")
+    logging.info(f"Time horizons: {TIME_HORIZON_COUNT}")
 
 
 def generate_p_ins_from_dat(
@@ -325,17 +330,24 @@ def generate_p_ins_from_dat(
 
 def main():
     start_d = datetime.datetime.now()
+    # read root metadata
+    root_meta = create_aaroot_meta_ins()
+
+    root_logger = logging.getLogger()
+    root_logger.setLevel(logging.INFO)
+    handler = logging.FileHandler(
+        root_meta.log_filename, encoding=root_meta.log_encoding
+    )
+    handler.setFormatter(logging.Formatter(root_meta.log_format))
+    root_logger.addHandler(handler)
+
+    # show log messages on terminal as well
+    root_logger.addHandler(logging.StreamHandler(sys.stdout))
+
+    logging.info(f"{__name__} program start @ {start_d}"[:-3])
 
     input_meta: InputMetadata = create_input_meta_ins(create_aaroot_meta_ins())
-    output_foldername, output_ext = input_meta.input_dir(), input_meta.input_ext
-    output_encoding = input_meta.encoding
-
     convert_dat_to_json(PurePath(INPUT_DIR), INPUT_EXT, FN_SPLITTER, input_meta)
-
-    logging.info("The number of crops:", N_CROPS_COUNT)
-    logging.info("The capacity by shelves:", N_SHELVES_COUNT)
-    logging.info("Demand multipliers:", DEMAND_MULT_COUNT)
-    logging.info("Time horizons:", TIME_HORIZON_COUNT)
 
     end_d = datetime.datetime.now()
     elapsed_d = end_d - start_d
