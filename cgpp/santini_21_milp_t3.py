@@ -220,7 +220,7 @@ def solve_santini_21_milp_t3(
                         solver.Add(x[c][g][t1][d][t2] == 0)
             else:
                 for d in range(
-                    d_prime_dict[c] - gamma_dict[c] + 1, d_prime_dict[c] + 1
+                    d_prime_dict[c] - gamma_dict[c] + 1, min(d_prime_dict[c] + 1, d_bar)
                 ):
                     for g in range(1, gamma_dict[c] - (d_prime_dict[c] - d) + 1):
                         solver.Add(x[c][g][t1][d][t2] == 0)
