@@ -16,6 +16,9 @@ def p_ins_iter(input_meta: InputMetadata) -> Iterable[ProbInsS21]:
         else:
             model_type = f"{filename_info_list[6]}_{filename_info_list[7]}"
 
+        if model_type not in input_meta.input_model_type_list:
+            continue
+
         p_ins: ProbInsS21
         if model_type == input_meta.model_type_t1:
             p_ins = ProbInsS21T1(**input_dict)

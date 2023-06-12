@@ -18,12 +18,21 @@ def t_list_after(t: int, t_list: list[int]) -> list[int]:
 def solve_santini_21_milp_t2(
     p_ins: ProbInsS21T2, solver_name: str, timelimit: int, obj_idx: int
 ) -> Variables:
-    if obj_idx == 2:
+    if obj_idx == 1:
+        return solve_santini_21_milp_t2_obj1(p_ins, solver_name, timelimit)
+    elif obj_idx == 2:
         return solve_santini_21_milp_t2_obj2(p_ins, solver_name, timelimit)
     elif obj_idx == 4:
         return solve_santini_21_milp_t2_obj4(p_ins, solver_name, timelimit)
     else:
         raise ValueError(f"Wrong obj_idx {obj_idx} as input")
+
+
+def solve_santini_21_milp_t2_obj1(
+    p_ins: ProbInsS21T2, solver_name: str, timelimit: int
+) -> Variables:
+    print("Under contruction")
+    return Variables()
 
 
 def solve_santini_21_milp_t2_obj2(

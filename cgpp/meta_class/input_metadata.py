@@ -8,6 +8,7 @@ class InputMetadata:
     encoding: str
     directory: str
     input_ext: str
+    input_model_type_list: list[str]
 
     fn_splitter: str
     model_type_t1: str
@@ -25,7 +26,6 @@ class InputMetadata:
         return Path(self._base_dir, self.directory)
 
     def input_data_f_loc_iter(self) -> Iterable[Path]:
-        # input_path.mkdir(parents=True, exist_ok=True)
         for fp in self.input_dir().iterdir():
             if fp.suffix == self.input_ext:
                 yield fp

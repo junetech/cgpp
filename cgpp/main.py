@@ -61,6 +61,7 @@ def read_and_solve_all(root_meta: AaRootMetadata):
     )
 
     # read problem parameters
+    # read "st_pen" only
     for p_ins in input_func.p_ins_iter(input_meta):
         solve_one_prob_ins(
             p_ins,

@@ -7,7 +7,6 @@ from openpyxl.utils import get_column_letter
 from openpyxl.workbook.workbook import Workbook
 from openpyxl.worksheet.worksheet import Worksheet
 from output_class import Variables
-from santini_21_milp_t1 import solve_santini_21_milp_t1
 from santini_21_milp_t2 import solve_santini_21_milp_t2
 from santini_21_milp_t3 import solve_santini_21_milp_t3
 
@@ -55,18 +54,6 @@ def make_summary_dict(
     return return_dict
 
 
-def schedule_by_santini_21_milp_t1(
-    p_ins: ProbInsS21T1,
-    solver_name: str,
-    timelimit: int,
-):
-    sol = solve_santini_21_milp_t1(
-        p_ins,
-        solver_name,
-        timelimit,
-    )
-
-
 def schedule_by_santini_21_milp_t2(
     p_ins: ProbInsS21T2,
     obj_idx: int,
@@ -105,17 +92,16 @@ def schedule_by_santini_21_milp(
         p_ins.set_prob_obj_name(obj_idx)
         logging.info(p_ins.get_prob_obj_name())
         summary_dict = None
-        if p_ins.model_type == "s":
-            # summary_dict = schedule_by_santini_21_milp_t1(p_ins, solver_name, timelimit)
-            continue
-        elif p_ins.model_type == "st":
+        if obj_idx in [1, 2, 4]:
             summary_dict = schedule_by_santini_21_milp_t2(
                 p_ins, obj_idx, solver_name, timelimit, output_meta
             )
-        elif p_ins.model_type == "st_pen":
+        elif obj_idx == 3:
             summary_dict = schedule_by_santini_21_milp_t3(
                 p_ins, obj_idx, solver_name, timelimit, output_meta
             )
+        else:
+            continue
 
         if summary_dict is not None:
             output_meta.append_summary(summary_dict, obj_idx)
