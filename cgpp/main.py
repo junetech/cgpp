@@ -73,6 +73,7 @@ def read_and_solve_all(root_meta: AaRootMetadata):
 
 
 def main():
+    start_d = datetime.datetime.now()
     # read root metadata
     root_meta = create_aaroot_meta_ins()
 
@@ -87,7 +88,6 @@ def main():
     # show log messages on terminal as well
     root_logger.addHandler(logging.StreamHandler(sys.stdout))
 
-    start_d = datetime.datetime.now()
     logging.info(f"{__name__} program start @ {start_d}"[:-3])
 
     read_and_solve_all(root_meta)
