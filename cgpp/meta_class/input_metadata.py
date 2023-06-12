@@ -13,6 +13,7 @@ class InputMetadata:
     model_type_t1: str
     model_type_t2: str
     model_type_t3: str
+    model_type_obj_idx_list_dict: dict[str, list[int]]
 
     solver_name: str
     timelimit: int
@@ -28,3 +29,10 @@ class InputMetadata:
         for fp in self.input_dir().iterdir():
             if fp.suffix == self.input_ext:
                 yield fp
+
+    def obj_idx_list(self) -> list[int]:
+        return sorted(
+            obj_idx
+            for obj_idx_list in self.model_type_obj_idx_list_dict.values()
+            for obj_idx in obj_idx_list
+        )

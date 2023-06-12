@@ -32,8 +32,14 @@ class ProbInsS21:
     @property
     def problem_name(self):
         _str = f"{self.n_shelves}-{self.n_crops}-{self.crop_id_string}-"
-        _str += f"{self.n_days}-{self.demand_mult}-{self.id}-{self.model_type}"
+        _str += f"{self.n_days}-{self.demand_mult}-{self.id}"
         return _str
+
+    def set_prob_obj_name(self, obj_idx: int):
+        self.prob_obj_name: str = f"{self.problem_name}-o{obj_idx}"
+
+    def get_prob_obj_name(self) -> str:
+        return self.prob_obj_name
 
     def info_from_filename(
         self,

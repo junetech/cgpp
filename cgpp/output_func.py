@@ -1,3 +1,4 @@
+import logging
 from typing import Any, Union
 
 from input_class import ProbInsS21, ProbInsS21T1, ProbInsS21T2, ProbInsS21T3
@@ -15,7 +16,7 @@ def make_summary_dict(
     p_ins: ProbInsS21, solution: Variables, output_meta: OutputMetadata
 ) -> dict[str, Any]:
     return_dict: dict[str, Any] = dict()
-    return_dict[output_meta.summary_colhead_list[0]] = p_ins.problem_name
+    return_dict[output_meta.summary_colhead_list[0]] = p_ins.get_prob_obj_name()
     return_dict[output_meta.summary_colhead_list[1]] = p_ins.n_crops
     return_dict[output_meta.summary_colhead_list[2]] = p_ins.cabinet
     return_dict[output_meta.summary_colhead_list[3]] = p_ins.demand_mult
@@ -59,7 +60,7 @@ def schedule_by_santini_21_milp_t1(
     solver_name: str,
     timelimit: int,
 ):
-    _, sol = solve_santini_21_milp_t1(
+    sol = solve_santini_21_milp_t1(
         p_ins,
         solver_name,
         timelimit,
@@ -68,14 +69,23 @@ def schedule_by_santini_21_milp_t1(
 
 def schedule_by_santini_21_milp_t2(
     p_ins: ProbInsS21T2,
+    obj_idx: int,
     solver_name: str,
     timelimit: int,
-):
-    _, sol = solve_santini_21_milp_t2(p_ins, solver_name, timelimit, 2)
+    output_meta: OutputMetadata,
+) -> dict[str, Any]:
+    sol = solve_santini_21_milp_t2(p_ins, solver_name, timelimit, obj_idx)
+    if sol.found_feasible:
+        make_santini_21_sch_xlsx(sol, p_ins, output_meta)
+    return make_summary_dict(p_ins, sol, output_meta)
 
 
 def schedule_by_santini_21_milp_t3(
-    p_ins: ProbInsS21T3, solver_name: str, timelimit: int, output_meta: OutputMetadata
+    p_ins: ProbInsS21T3,
+    obj_idx: int,
+    solver_name: str,
+    timelimit: int,
+    output_meta: OutputMetadata,
 ) -> dict[str, Any]:
     sol = solve_santini_21_milp_t3(p_ins, solver_name, timelimit)
     if sol.found_feasible:
@@ -84,21 +94,31 @@ def schedule_by_santini_21_milp_t3(
 
 
 def schedule_by_santini_21_milp(
-    p_ins: ProbInsS21, solver_name: str, timelimit: int, output_meta: OutputMetadata
-) -> dict[str, Any]:
+    p_ins: ProbInsS21,
+    model_type_obj_idx_list_dict: dict[str, list[int]],
+    solver_name: str,
+    timelimit: int,
+    output_meta: OutputMetadata,
+):
     p_ins.create_t_idx_list()
-    if p_ins.model_type == "s":
-        # schedule_by_santini_21_milp_t1(p_ins, solver_name, timelimit)
-        pass
-    elif p_ins.model_type == "st":
-        # schedule_by_santini_21_milp_t2(p_ins, solver_name, timelimit)
-        pass
-    elif p_ins.model_type == "st_pen":
-        return schedule_by_santini_21_milp_t3(
-            p_ins, solver_name, timelimit, output_meta
-        )
-    else:
-        raise ValueError(f"Unknown model type {p_ins.model_type}")
+    for obj_idx in model_type_obj_idx_list_dict[p_ins.model_type]:
+        p_ins.set_prob_obj_name(obj_idx)
+        logging.info(p_ins.get_prob_obj_name())
+        summary_dict = None
+        if p_ins.model_type == "s":
+            # summary_dict = schedule_by_santini_21_milp_t1(p_ins, solver_name, timelimit)
+            continue
+        elif p_ins.model_type == "st":
+            summary_dict = schedule_by_santini_21_milp_t2(
+                p_ins, obj_idx, solver_name, timelimit, output_meta
+            )
+        elif p_ins.model_type == "st_pen":
+            summary_dict = schedule_by_santini_21_milp_t3(
+                p_ins, obj_idx, solver_name, timelimit, output_meta
+            )
+
+        if summary_dict is not None:
+            output_meta.append_summary(summary_dict, obj_idx)
 
 
 def make_santini_21_sch_xlsx(
@@ -108,12 +128,10 @@ def make_santini_21_sch_xlsx(
     C_list = p_ins.crop_id_list  # c\in C in paper
     # S_list = p_ins.shelf_id_list
     D_list = p_ins.t_idx_list[:-1]  # d\in D in paper; set of growth days
-    d_bar = p_ins.t_idx_list[-1]  # d_bar in paper
-    D_prime_list = [0] + D_list  # extended time horizon
     # day 0 is the earliest day seeds can be planted, day 1 is the earliest day of growth counted
     K_list = p_ins.config_id_list  # k\in K in paper
     cfg_id: Union[str, None]
-    if type(p_ins) == ProbInsS21T3:
+    if type(p_ins) == ProbInsS21T2 or ProbInsS21T3:
         T_list = p_ins.shelf_type_list  # t\in T in paper
 
     # print(C_list)
@@ -124,24 +142,14 @@ def make_santini_21_sch_xlsx(
     # print(D_prime_list)
 
     # Parameters
-    # c -> d -> demand quantity
-    p_dict = p_ins.make_demand_dict()
-    # c -> s -> the crop can grow on the shelf type
-    # delta_dict = p_ins.crop_shelf_compatible
-    # c -> list of compatible s
-    # S_dict = {c: [s for s in S_list if delta_dict[c][s]] for c in C_list}
     # c -> the number of growth days
     gamma_dict = p_ins.crop_growth_days
     # c -> g (growth day) -> configuration required
     k_dict = p_ins.crop_growth_day_config_dict
-    # s -> t -> capacity
-    q_dict = p_ins.capacity
     # c -> t -> the crop can grow on the shelf type
     delta_dict = p_ins.crop_shelf_type_compatible
     # c -> list of compatible t
     T_dict = {c: [t for t in T_list if delta_dict[c][t]] for c in C_list}
-    # t -> number of shelves
-    n_dict = p_ins.num_shelves
 
     # seed vault index
     sigma = "SeedVault"
@@ -149,7 +157,6 @@ def make_santini_21_sch_xlsx(
     tau = "Produce"
     # S_prime_list = [sigma, tau] + S_list
     # S_prime_dict = {c: [sigma, tau] + S_dict[c] for c in C_list}
-    T_prime_list = [sigma, tau] + T_list
     for c in C_list:
         delta_dict[c][sigma] = True
         delta_dict[c][tau] = True
@@ -173,11 +180,12 @@ def make_santini_21_sch_xlsx(
     shelf_ws_list: list[Worksheet] = [cfg_ws]
     ws_list: list[Worksheet] = crop_ws_list + shelf_ws_list
 
-    cursor["row"] = 2
+    cursor["row"] = 1
     time_row = [output_meta.keystone_val] + [0] + p_ins.t_idx_list
 
     for ws in ws_list:
-        ws.cell(**cursor).value = p_ins.problem_name
+        ws.cell(**cursor).value = p_ins.get_prob_obj_name()
+        cursor["row"] = 2
         ws.freeze_panes = ws["B2"]
         for idx, val in enumerate(time_row):
             col = idx + cursor["column"]
@@ -327,5 +335,5 @@ def make_santini_21_sch_xlsx(
                 col = cursor["column"] + 1 + c_idx
                 hv_ws.cell(column=col, row=cursor["row"]).value = hv_row_val
 
-    f_loc = output_meta.crop_schedule_f_loc(p_ins.problem_name, 3)
+    f_loc = output_meta.crop_schedule_f_loc(p_ins.get_prob_obj_name())
     wb.save(filename=f_loc)

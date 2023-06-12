@@ -1,7 +1,7 @@
 {
     "encoding": "utf-8",
     "directory": "output_data",
-    "crop_schedule_fn_prefix": "crop_sch_",
+    "crop_schedule_fn_prefix": "crop_sch",
     "crop_schedule_fn_ext": ".xlsx",
     "keystone_val": "crop|day",
     "first_col_wth": 9,
@@ -10,6 +10,9 @@
     "shelf_config_sheetname": "ShelfCfg",
     "germination_sheetname": "Germination",
     "harvest_sheetname": "Harvest",
-    "summary_fn_prefix": "run_summary_",
-    "summary_colhead_list": [ "InsName", "#Crops", "Cabinet", "DemandMult", "TimeHoriz", "NotSolved", "IsUnbound", "IsInfeasi", "FoundFea", "IsOptimal", "OptGap0", "OptGap1", "Time(sec)", "LB", "UB" ]
+    "summary_fn_prefix": "run_summary",
+    "summary_fn_ext": ".xlsx",
+    "summary_colhead_list": [ "ProbName", "#Crops", "Cabinet", "DemandMult", "TimeHoriz", "NotSolved", "IsUnbound", "IsInfeasi", "FoundFea", "IsOptimal", "OptGap0", "OptGap1", "Time(sec)", "LB", "UB" ],
+    "all_record_sheet_name": "AllRecord",
+    "obj_sheet_name_prefix": "Obj"
 }

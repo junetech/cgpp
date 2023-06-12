@@ -39,33 +39,35 @@ def create_aaroot_meta_ins() -> AaRootMetadata:
 
 def solve_one_prob_ins(
     p_ins: ProbInsS21,
-    output_meta: OutputMetadata,
+    model_type_obj_idx_list_dict: dict[str, list[int]],
     solver_name: str,
     timelimit: int,
+    output_meta: OutputMetadata,
 ):
-    logging.info(p_ins.problem_name)
-    summary_dict = schedule_by_santini_21_milp(
-        p_ins, solver_name, timelimit, output_meta
+    schedule_by_santini_21_milp(
+        p_ins, model_type_obj_idx_list_dict, solver_name, timelimit, output_meta
     )
-    if summary_dict is None:
-        return
-    output_meta.append_summary(summary_dict)
 
 
 def read_and_solve_all(root_meta: AaRootMetadata):
     # read metadata
     input_meta = create_input_meta_ins(root_meta)
     output_meta = create_output_meta_ins(root_meta)
+    output_meta.set_ymdhms(datetime.datetime.now().strftime("%Y%m%d_%H%M%S"))
 
     # initialize summary file
     output_meta.init_summary_file(
-        summary_fn_suffix=datetime.datetime.now().strftime("%Y%m%d%H%M%S")
+        obj_idx_list=input_meta.obj_idx_list(),
     )
 
     # read problem parameters
     for p_ins in input_func.p_ins_iter(input_meta):
         solve_one_prob_ins(
-            p_ins, output_meta, input_meta.solver_name, input_meta.timelimit
+            p_ins,
+            input_meta.model_type_obj_idx_list_dict,
+            input_meta.solver_name,
+            input_meta.timelimit,
+            output_meta,
         )
 
 

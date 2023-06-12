@@ -26,4 +26,4 @@ class VariablesObj3(Variables):
 
 
 class VariablesObj4(Variables):
-    v: dict
+    nu: dict

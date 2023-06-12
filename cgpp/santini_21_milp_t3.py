@@ -3,7 +3,7 @@ from itertools import product
 
 from input_class import ProbInsS21T3
 from ortools.linear_solver.linear_solver_natural_api import SumArray
-from ortools.linear_solver.pywraplp import Solver
+from ortools.linear_solver.pywraplp import Objective, Solver
 from output_class import VariablesObj3
 
 
@@ -152,7 +152,7 @@ def solve_santini_21_milp_t3(
         }
         for c in C_list
     }
-    obj_func = solver.Objective()
+    obj_func: Objective = solver.Objective()
     for c, d in product(C_list, D_list + [d_bar]):
         if d not in omega_dict[c]:
             continue
@@ -226,25 +226,24 @@ def solve_santini_21_milp_t3(
             solver.Add(x[c][gamma_dict[c]][t][d - 1][tau] <= p_dict[c][d])
 
     # d -> k -> the number of units of crop c that requires configuration k on day d
-    nu_dict: dict[int, dict[str, int]] = {d: {k: 0 for k in K_list} for d in D_list}
+    eta_dict: dict[int, dict[str, int]] = {d: {k: 0 for k in K_list} for d in D_list}
     for d, k in product(D_list, K_list):
         for c in C_list:
             # fix: is range(d + 1, d + gamma_dict[c])  in paper
             for d_prime in range(d + 1, min(d + gamma_dict[c], d_bar) + 1):
                 if k == k_dict[c][gamma_dict[c] - (d_prime - d - 1)]:
                     # fix: is p_dict[c][d] in paper
-                    nu_dict[d][k] += p_dict[c][d_prime]
+                    eta_dict[d][k] += p_dict[c][d_prime]
     for t, d, k in product(T_list, D_list, K_list):
-        if nu_dict[d][k] == 0:
+        if eta_dict[d][k] == 0:
             solver.Add(y[t][d][k] == 0)
 
-    obj_val: float = 0.0
-    solution = VariablesObj3()
     # solve
     solver.set_time_limit(timelimit * 1000)
     status = solver.Solve()
     wall_sec = solver.wall_time() / 1000
 
+    solution = VariablesObj3()
     solution.wall_sec = wall_sec
 
     _str: str = "solver status log placeholder"
