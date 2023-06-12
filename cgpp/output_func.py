@@ -264,7 +264,7 @@ def make_santini_21_sch_xlsx(
                 # harvest at the due date
                 harvest_t_idx = t_idx + gamma_dict[crop_id] + 1
                 hv_unit_count = 0
-                if harvest_t_idx <= p_ins.n_days - 1:
+                if harvest_t_idx <= p_ins.n_days:
                     hv_unit_count = int(
                         solution.x[crop_id][gamma_dict[c]][shelf_id][harvest_t_idx - 1][
                             tau
