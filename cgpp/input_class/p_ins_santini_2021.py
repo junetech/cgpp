@@ -163,6 +163,21 @@ class ProbInsS21T2(ProbInsS21):
             for shelf_id in self.shelf_id_dict[shelf_type]
         ]
 
+    @property
+    def crop_shelf_compatible(self) -> dict[str, dict[str, bool]]:
+        return {
+            crop_id: {
+                shelf_id: shelf_type_dict[shelf_type]
+                for shelf_type, shelf_id_list in self.shelf_id_dict.items()
+                for shelf_id in shelf_id_list
+            }
+            for crop_id, shelf_type_dict in self.crop_shelf_type_compatible.items()
+        }
+
+    @property
+    def shelf_id_capacity(self) -> dict[str, int]:
+        return {shelf_id: 1 for shelf_id in self.shelf_id_list}
+
     def make_val_dict(self) -> dict[str, Any]:
         return_dict: dict[str, Any] = super().make_val_dict()
 

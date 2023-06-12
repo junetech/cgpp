@@ -279,7 +279,7 @@ def solve_santini_21_milp_t2_obj2(
             if eta_dict[d][k] == 0:
                 continue
             rhs = math.ceil(eta_dict[d][k] / q_bar_dict[k])
-            solver.add(SumArray(y[t][d][k] for t in T_list) >= rhs)
+            solver.Add(SumArray(y[t][d][k] for t in T_list) >= rhs)
 
     # solve
     solver.set_time_limit(timelimit * 1000)
@@ -593,7 +593,7 @@ def solve_santini_21_milp_t2_obj4(
             if eta_dict[d][k] == 0:
                 continue
             rhs = math.ceil(eta_dict[d][k] / q_bar_dict[k])
-            solver.add(SumArray(y[t][d][k] for t in T_list) >= rhs)
+            solver.Add(SumArray(y[t][d][k] for t in T_list) >= rhs)
 
     # solve
     solver.set_time_limit(timelimit * 1000)
