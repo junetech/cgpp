@@ -13,6 +13,8 @@ class ProbInsS21:
     id: int  # instance id
     model_type: str
 
+    cabinet: str
+
     crop_id_list: list[str]
     config_id_list: list[str]
 
@@ -75,6 +77,7 @@ class ProbInsS21:
         return_dict["demand_mult"] = self.demand_mult
         return_dict["id"] = self.id
         return_dict["model_type"] = self.model_type
+        return_dict["cabinet"] = self.cabinet
         return return_dict
 
     def make_demand_dict(self) -> dict[str, dict[int, int]]:

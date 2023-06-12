@@ -15,7 +15,9 @@ def t_list_after(t: int, t_list: list[int]) -> list[int]:
     return [u for u in t_list if u >= t]
 
 
-def solve_santini_21_milp_t3(p_ins: ProbInsS21T3, solver_name: str, timelimit: int):
+def solve_santini_21_milp_t3(
+    p_ins: ProbInsS21T3, solver_name: str, timelimit: int
+) -> VariablesObj3:
     # from pprint import pprint
 
     # Indices
@@ -243,28 +245,37 @@ def solve_santini_21_milp_t3(p_ins: ProbInsS21T3, solver_name: str, timelimit: i
     status = solver.Solve()
     wall_sec = solver.wall_time() / 1000
 
+    solution.wall_sec = wall_sec
+
     _str: str = "solver status log placeholder"
     if status == Solver.OPTIMAL:
         _str = (
             f"*Optimal* objective value = {solver.Objective().Value()}\t"
             + f"found in {wall_sec:.3f} seconds"
         )
+        solution.found_feasible = True
+        solution.is_optimal = True
     elif status == Solver.FEASIBLE:
         _str = (
             f"An incumbent objective value = {solver.Objective().Value()}\t"
             + f"and best bound = {solver.Objective().BestBound()}\t"
             + f"found in {wall_sec:.3f} seconds"
         )
+        solution.found_feasible = True
     elif status == Solver.INFEASIBLE:
         _str = f"The problem is found to be infeasible in {wall_sec:.3f} seconds"
+        solution.is_infeasible = True
     elif status == Solver.UNBOUNDED:
         _str = f"The problem is found to be unbounded in {wall_sec:.3f} seconds"
+        solution.is_unbounded = True
     elif status == Solver.NOT_SOLVED:
         _str = f"No solution found in {wall_sec:.3f} seconds"
+        solution.not_solved = True
     logging.info(_str)
 
-    if status == Solver.OPTIMAL or status == Solver.FEASIBLE:
-        obj_val = solver.Objective().Value()
+    if solution.found_feasible:
+        solution.obj_val = solver.Objective().Value()
+        solution.obj_bound = solver.Objective().BestBound()
         _str = f"Problem solved in {solver.iterations()} iterations"
         _str += f" & {solver.nodes()} branch-and-bound nodes"
         logging.info(_str)
@@ -292,4 +303,4 @@ def solve_santini_21_milp_t3(p_ins: ProbInsS21T3, solver_name: str, timelimit: i
             c: {d: u[c][d].solution_value() for d in D_list + [d_bar]} for c in C_list
         }
 
-    return obj_val, solution
+    return solution

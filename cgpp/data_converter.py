@@ -20,6 +20,11 @@ INPUT_DIR, INPUT_EXT = "../input_data/dat_files", ".dat"
 #     ".dat",
 # )
 
+N_CROPS_LIST: list[int] = [1, 2, 3, 4, 5, 6]
+N_SHELVES_DICT: dict[int, str] = {7: "small", 9: "medium", 12: "large"}
+DEMAND_MULT_LIST: list[float] = [1.0, 1.2, 1.4, 1.6, 1.8, 2.0]
+TIME_HORIZON_LIST: list[int] = [60, 80, 100]
+
 
 def shelf_id_str(idx: int) -> str:
     return f"s_{idx}"
@@ -30,7 +35,7 @@ def shelf_type_str(idx: int) -> str:
 
 
 def config_id_str(idx: int) -> str:
-    return f"cfg_{idx}"
+    return f"cf_{idx}"
 
 
 def from_file_to_dict(
@@ -86,13 +91,18 @@ def generate_p_ins_from_dat(
             crop_id_string,
             n_days_fn,
             demand_mult,
-            id,
+            ins_id,
             model_type,
-        ] = filename_info_list[:7]
-        if len(filename_info_list) == 7:
-            model_type = filename_info_list[6]
-        else:
-            model_type = f"{filename_info_list[6]}_{filename_info_list[7]}"
+        ] = (
+            int(filename_info_list[0]),
+            int(filename_info_list[1]),
+            filename_info_list[2],
+            int(filename_info_list[3]),
+            float(filename_info_list[4]),
+            int(filename_info_list[5]),
+            "_".join(filename_info_list[6:]),
+        )
+        assert demand_mult in DEMAND_MULT_LIST
 
         input_dict = from_file_to_dict(fp, ";", "\n", " = ")
 
@@ -120,25 +130,26 @@ def generate_p_ins_from_dat(
                 )
 
         # crop information
-        if n_crops != int(n_crops_fn):
+        if n_crops != n_crops_fn:
             print(
                 UserWarning(
-                    f"n_crops of filename {int(n_crops_fn)} != n_crops of data {n_crops}"
+                    f"n_crops of filename {n_crops_fn} != n_crops of data {n_crops}"
                 )
             )
             continue
+        assert n_crops in N_CROPS_LIST
 
-        if n_days != int(n_days_fn):
+        if n_days != n_days_fn:
             print(
                 UserWarning(
-                    f"n_days of filename {int(n_days_fn)} != n_days of data {n_days}"
+                    f"n_days of filename {n_days_fn} != n_days of data {n_days}"
                 )
             )
             continue
+        assert n_days in TIME_HORIZON_LIST
 
         crop_id_list = [char for char in crop_id_string]
         config_id_list = [config_id_str(idx + 1) for idx in range(n_configurations)]
-        t_list = [t + 1 for t in range(n_days)]
 
         crop_growth_days_dict = dict()
         for c_index, crop_id in enumerate(crop_id_list):
@@ -164,13 +175,15 @@ def generate_p_ins_from_dat(
         # shelf information
         capa_dict: dict[str, dict[str, int]] = dict()
         if model_type == "s":
-            if n_shelves != int(n_shelves_fn):
+            if n_shelves != n_shelves_fn:
                 print(
                     UserWarning(
                         f"n_shelves of filename {n_shelves_fn} != n_shelves of data {n_shelves}"
                     )
                 )
                 continue
+            assert n_shelves in N_SHELVES_DICT.keys()
+
             shelf_id_list: list[str] = [
                 shelf_id_str(idx + 1) for idx in range(n_shelves)
             ]
@@ -191,9 +204,10 @@ def generate_p_ins_from_dat(
                 n_crops=n_crops,
                 crop_id_string=crop_id_string,
                 n_days=n_days,
-                demand_mult=float(demand_mult),
-                id=int(id),
+                demand_mult=demand_mult,
+                id=ins_id,
                 model_type=model_type,
+                cabinet=N_SHELVES_DICT[n_shelves],
                 crop_id_list=crop_id_list,
                 config_id_list=config_id_list,
                 crop_growth_days=crop_growth_days_dict,
@@ -222,6 +236,8 @@ def generate_p_ins_from_dat(
                     [shelf_id_str(n + idx + 1) for n in range(shelf_type_count)]
                 )
                 idx += shelf_type_count
+            n_shelves = idx
+            assert n_shelves in N_SHELVES_DICT.keys()
 
             cstc_dict: dict[str, dict[str, bool]] = {
                 crop_id: dict() for crop_id in crop_id_list
@@ -249,9 +265,10 @@ def generate_p_ins_from_dat(
                     n_crops=n_crops,
                     crop_id_string=crop_id_string,
                     n_days=n_days,
-                    demand_mult=float(demand_mult),
-                    id=int(id),
+                    demand_mult=demand_mult,
+                    id=ins_id,
                     model_type=model_type,
+                    cabinet=N_SHELVES_DICT[n_shelves],
                     crop_id_list=crop_id_list,
                     config_id_list=config_id_list,
                     crop_growth_days=crop_growth_days_dict,
@@ -272,9 +289,10 @@ def generate_p_ins_from_dat(
                     n_crops=n_crops,
                     crop_id_string=crop_id_string,
                     n_days=n_days,
-                    demand_mult=float(demand_mult),
-                    id=int(id),
+                    demand_mult=demand_mult,
+                    id=ins_id,
                     model_type=model_type,
+                    cabinet=N_SHELVES_DICT[n_shelves],
                     crop_id_list=crop_id_list,
                     config_id_list=config_id_list,
                     crop_growth_days=crop_growth_days_dict,

@@ -1,4 +1,4 @@
-from typing import Union
+from typing import Any, Union
 
 from input_class import ProbInsS21, ProbInsS21T1, ProbInsS21T2, ProbInsS21T3
 from meta_class import OutputMetadata
@@ -9,6 +9,49 @@ from output_class import Variables
 from santini_21_milp_t1 import solve_santini_21_milp_t1
 from santini_21_milp_t2 import solve_santini_21_milp_t2
 from santini_21_milp_t3 import solve_santini_21_milp_t3
+
+
+def make_summary_dict(
+    p_ins: ProbInsS21, solution: Variables, output_meta: OutputMetadata
+) -> dict[str, Any]:
+    return_dict: dict[str, Any] = dict()
+    return_dict[output_meta.summary_colhead_list[0]] = p_ins.problem_name
+    return_dict[output_meta.summary_colhead_list[1]] = p_ins.n_crops
+    return_dict[output_meta.summary_colhead_list[2]] = p_ins.cabinet
+    return_dict[output_meta.summary_colhead_list[3]] = p_ins.demand_mult
+    return_dict[output_meta.summary_colhead_list[4]] = p_ins.n_days
+
+    return_dict[output_meta.summary_colhead_list[12]] = solution.wall_sec
+    return_dict[output_meta.summary_colhead_list[5]] = int(solution.not_solved)
+    return_dict[output_meta.summary_colhead_list[6]] = int(solution.is_unbounded)
+    return_dict[output_meta.summary_colhead_list[7]] = int(solution.is_infeasible)
+    return_dict[output_meta.summary_colhead_list[8]] = int(solution.found_feasible)
+    return_dict[output_meta.summary_colhead_list[9]] = int(solution.is_optimal)
+
+    if solution.not_solved or solution.is_unbounded or solution.is_infeasible:
+        return_dict[output_meta.summary_colhead_list[13]] = None
+        return_dict[output_meta.summary_colhead_list[14]] = None
+        return_dict[output_meta.summary_colhead_list[10]] = None
+        return_dict[output_meta.summary_colhead_list[11]] = None
+        return return_dict
+
+    if solution.found_feasible:
+        ub, lb = solution.obj_val, solution.obj_bound
+        return_dict[output_meta.summary_colhead_list[13]] = lb
+        return_dict[output_meta.summary_colhead_list[14]] = ub
+        if solution.is_optimal:
+            opt_gap0 = opt_gap1 = 0
+        else:
+            if lb == 0:
+                opt_gap0 = "infty"
+            else:
+                opt_gap0 = (ub - lb) / lb
+            # https://www.gurobi.com/documentation/9.5/refman/mipgap2.html
+            opt_gap1 = (ub - lb) / ub
+    return_dict[output_meta.summary_colhead_list[10]] = opt_gap0
+    return_dict[output_meta.summary_colhead_list[11]] = opt_gap1
+
+    return return_dict
 
 
 def schedule_by_santini_21_milp_t1(
@@ -33,14 +76,16 @@ def schedule_by_santini_21_milp_t2(
 
 def schedule_by_santini_21_milp_t3(
     p_ins: ProbInsS21T3, solver_name: str, timelimit: int, output_meta: OutputMetadata
-):
-    _, sol = solve_santini_21_milp_t3(p_ins, solver_name, timelimit)
-    make_santini_21_sch_xlsx(sol, p_ins, output_meta)
+) -> dict[str, Any]:
+    sol = solve_santini_21_milp_t3(p_ins, solver_name, timelimit)
+    if sol.found_feasible:
+        make_santini_21_sch_xlsx(sol, p_ins, output_meta)
+    return make_summary_dict(p_ins, sol, output_meta)
 
 
 def schedule_by_santini_21_milp(
     p_ins: ProbInsS21, solver_name: str, timelimit: int, output_meta: OutputMetadata
-):
+) -> dict[str, Any]:
     p_ins.create_t_idx_list()
     if p_ins.model_type == "s":
         # schedule_by_santini_21_milp_t1(p_ins, solver_name, timelimit)
@@ -49,7 +94,9 @@ def schedule_by_santini_21_milp(
         # schedule_by_santini_21_milp_t2(p_ins, solver_name, timelimit)
         pass
     elif p_ins.model_type == "st_pen":
-        schedule_by_santini_21_milp_t3(p_ins, solver_name, timelimit, output_meta)
+        return schedule_by_santini_21_milp_t3(
+            p_ins, solver_name, timelimit, output_meta
+        )
     else:
         raise ValueError(f"Unknown model type {p_ins.model_type}")
 

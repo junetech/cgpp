@@ -9,5 +9,7 @@
     "schedule_sheetname": "Schedule",
     "shelf_config_sheetname": "ShelfCfg",
     "germination_sheetname": "Germination",
-    "harvest_sheetname": "Harvest"
+    "harvest_sheetname": "Harvest",
+    "summary_fn_prefix": "run_summary_",
+    "summary_colhead_list": [ "InsName", "#Crops", "Cabinet", "DemandMult", "TimeHoriz", "NotSolved", "IsUnbound", "IsInfeasi", "FoundFea", "IsOptimal", "OptGap0", "OptGap1", "Time(sec)", "LB", "UB" ]
 }

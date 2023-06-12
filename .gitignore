@@ -154,5 +154,6 @@ cython_debug/
 # user-specified
 .vscode/
 input_data/dat_files/
-input_data/json_files/
+input_data/json_files*
 *.xlsx
+*.csv

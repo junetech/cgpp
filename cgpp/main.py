@@ -44,13 +44,24 @@ def solve_one_prob_ins(
     timelimit: int,
 ):
     logging.info(p_ins.problem_name)
-    schedule_by_santini_21_milp(p_ins, solver_name, timelimit, output_meta)
+    summary_dict = schedule_by_santini_21_milp(
+        p_ins, solver_name, timelimit, output_meta
+    )
+    if summary_dict is None:
+        return
+    output_meta.append_summary(summary_dict)
 
 
 def read_and_solve_all(root_meta: AaRootMetadata):
     # read metadata
     input_meta = create_input_meta_ins(root_meta)
     output_meta = create_output_meta_ins(root_meta)
+
+    # initialize summary file
+    output_meta.init_summary_file(
+        summary_fn_suffix=datetime.datetime.now().strftime("%Y%m%d%H%M%S")
+    )
+
     # read problem parameters
     for p_ins in input_func.p_ins_iter(input_meta):
         solve_one_prob_ins(
