@@ -58,7 +58,7 @@ def convert_dat_to_json(
     for p_ins in generate_p_ins_from_dat(
         input_dir, input_ext, fn_splitter, input_meta.input_model_type_list
     ):
-        fn = p_ins.problem_name + output_ext
+        fn = f"{p_ins.problem_name}-{p_ins.model_type}{output_ext}"
         dump_dict = p_ins.make_json_dump_dict()
         with open(output_dir.joinpath(fn), "w", encoding=output_encoding) as f:
             json.dump(
