@@ -1,15 +1,11 @@
 import ast
 import datetime
 import json
+import logging
 from pathlib import Path, PurePath
 from typing import Iterable
 
-from input_class import (
-    ProbInsS21,
-    ProbInsS21T1,
-    ProbInsS21T2,
-    ProbInsS21T3,
-)
+from input_class import ProbInsS21, ProbInsS21T1, ProbInsS21T2, ProbInsS21T3
 from main import create_aaroot_meta_ins
 from meta_class import InputMetadata, create_input_meta_ins
 
@@ -51,15 +47,17 @@ def from_file_to_dict(
 
 
 def convert_dat_to_json(
-    input_dir: PurePath,
-    input_ext: str,
-    output_dir: PurePath,
-    output_ext: str,
-    fn_splitter: str,
-    output_encoding: str,
+    input_dir: PurePath, input_ext: str, fn_splitter: str, input_meta: InputMetadata
 ):
-    Path(output_dir).mkdir(parents=True, exist_ok=True)
-    for p_ins in generate_p_ins_from_dat(input_dir, input_ext, fn_splitter):
+    output_dir = input_meta.input_dir()
+    output_dir.mkdir(parents=True, exist_ok=True)
+    output_ext = input_meta.input_ext
+    output_encoding = input_meta.encoding
+
+    conversion_count = 0
+    for p_ins in generate_p_ins_from_dat(
+        input_dir, input_ext, fn_splitter, input_meta.input_model_type_list
+    ):
         fn = p_ins.problem_name + output_ext
         dump_dict = p_ins.make_json_dump_dict()
         with open(output_dir.joinpath(fn), "w", encoding=output_encoding) as f:
@@ -71,12 +69,15 @@ def convert_dat_to_json(
                 separators=(",", ":"),
                 sort_keys=False,
             )
+        conversion_count += 1
+    logging.info(f"{conversion_count} files converted")
 
 
 def generate_p_ins_from_dat(
     input_dir: PurePath,
     input_ext: str,
     fn_splitter: str,
+    input_model_type_list: list[str],
 ) -> Iterable[ProbInsS21]:
     input_path = Path(input_dir)
     fp_list: list[Path] = [fp for fp in input_path.iterdir() if fp.suffix == input_ext]
@@ -103,6 +104,9 @@ def generate_p_ins_from_dat(
             "_".join(filename_info_list[6:]),
         )
         assert demand_mult in DEMAND_MULT_LIST
+
+        if model_type not in input_model_type_list:
+            continue
 
         input_dict = from_file_to_dict(fp, ";", "\n", " = ")
 
@@ -317,14 +321,7 @@ def main():
     output_foldername, output_ext = input_meta.input_dir(), input_meta.input_ext
     output_encoding = input_meta.encoding
 
-    convert_dat_to_json(
-        PurePath(INPUT_DIR),
-        INPUT_EXT,
-        PurePath(output_foldername),
-        output_ext,
-        FN_SPLITTER,
-        output_encoding,
-    )
+    convert_dat_to_json(PurePath(INPUT_DIR), INPUT_EXT, FN_SPLITTER, input_meta)
 
     end_d = datetime.datetime.now()
     elapsed_d = end_d - start_d
