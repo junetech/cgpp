@@ -186,6 +186,7 @@ def solve_santini_21_milp_t3(
         for g in range(0, gamma_dict[c] + 1):
             solver.Add(x[c][g][sigma][d][tau] == 0)
 
+    # TODO: these are constraints, not variable fixing
     for c, d in product(C_list, D_prime_list):
         for t, g in product(T_prime_dict[c], range(1, gamma_dict[c] + 1)):
             solver.Add(x[c][g][sigma][d][t] == 0)
@@ -196,6 +197,7 @@ def solve_santini_21_milp_t3(
         for t1, t2, g in product(T_dict[c], T_dict[c], [0, gamma_dict[c]]):
             solver.Add(x[c][g][t1][d][t2] == 0)
 
+    # TODO: these are constraints, not variable fixing
     for c, d in product(C_list, D_prime_list):
         # fix: is T (no subscript) in the paper
         for t1, t2 in product(T_dict[c] + [tau], T_prime_dict[c]):
@@ -205,21 +207,25 @@ def solve_santini_21_milp_t3(
         for t1, t2 in product(T_prime_dict[c], [sigma] + T_dict[c]):
             solver.Add(x[c][gamma_dict[c]][t1][d][t2] == 0)
 
+    # TODO: these are constraints, not variable fixing
+    # d_prime_dict[c] is the day of delivery;
+    # d_prime_dict[c]-1 is the last day of growth for g=gamma_dict[c]
     d_prime_dict = p_ins.make_last_demand_date_dict()
     for c in C_list:
         for t1, t2 in product(T_dict[c], T_dict[c]):
             # added: if no demand, all x for the crop should be 0
             if c not in d_prime_dict:
                 for d in D_prime_list:
-                    for g in range(0, gamma_dict[c] + 1):
+                    for g in range(1, gamma_dict[c] + 1):
                         solver.Add(x[c][g][t1][d][t2] == 0)
             else:
                 for d in range(
                     d_prime_dict[c] - gamma_dict[c] + 1, d_prime_dict[c] + 1
                 ):
-                    for g in range(0, gamma_dict[c] - (d_prime_dict[c] - d) + 1):
+                    for g in range(1, gamma_dict[c] - (d_prime_dict[c] - d) + 1):
                         solver.Add(x[c][g][t1][d][t2] == 0)
 
+    # TODO: these are constraints, not variable fixing
     for c in C_list:
         for t1, t2 in product(T_prime_dict[c], T_prime_dict[c]):
             for d in t_list_before(gamma_dict[c] - 1, D_prime_list):
@@ -242,9 +248,10 @@ def solve_santini_21_milp_t3(
                 if k == k_dict[c][gamma_dict[c] - (d_prime - d - 1)]:
                     # fix: is p_dict[c][d] in paper
                     eta_dict[d][k] += p_dict[c][d_prime]
-    for t, d, k in product(T_list, D_list, K_list):
+    for d, k in product(D_list, K_list):
         if eta_dict[d][k] == 0:
-            solver.Add(y[t][d][k] == 0)
+            for t in T_list:
+                solver.Add(y[t][d][k] == 0)
 
     # solve
     solver.set_time_limit(timelimit * 1000)
