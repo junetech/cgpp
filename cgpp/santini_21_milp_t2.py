@@ -224,9 +224,17 @@ def solve_santini_21_milp_t2_obj2(
     d_prime_dict = p_ins.make_last_demand_date_dict()
     for c in C_list:
         for t1, t2 in product(T_dict[c], T_dict[c]):
-            for d in range(d_prime_dict[c] - gamma_dict[c] + 1, d_prime_dict[c] + 1):
-                for g in range(0, gamma_dict[c] - (d_prime_dict[c] - d) + 1):
-                    solver.Add(x[c][g][t1][d][t2] == 0)
+            # added: if no demand, all x for the crop should be 0
+            if c not in d_prime_dict:
+                for d in D_prime_list:
+                    for g in range(0, gamma_dict[c] + 1):
+                        solver.Add(x[c][g][t1][d][t2] == 0)
+            else:
+                for d in range(
+                    d_prime_dict[c] - gamma_dict[c] + 1, d_prime_dict[c] + 1
+                ):
+                    for g in range(0, gamma_dict[c] - (d_prime_dict[c] - d) + 1):
+                        solver.Add(x[c][g][t1][d][t2] == 0)
 
     for c in C_list:
         for t1, t2 in product(T_prime_dict[c], T_prime_dict[c]):
@@ -512,9 +520,17 @@ def solve_santini_21_milp_t2_obj4(
     d_prime_dict = p_ins.make_last_demand_date_dict()
     for c in C_list:
         for t1, t2 in product(T_dict[c], T_dict[c]):
-            for d in range(d_prime_dict[c] - gamma_dict[c] + 1, d_prime_dict[c] + 1):
-                for g in range(0, gamma_dict[c] - (d_prime_dict[c] - d) + 1):
-                    solver.Add(x[c][g][t1][d][t2] == 0)
+            # added: if no demand, all x for the crop should be 0
+            if c not in d_prime_dict:
+                for d in D_prime_list:
+                    for g in range(0, gamma_dict[c] + 1):
+                        solver.Add(x[c][g][t1][d][t2] == 0)
+            else:
+                for d in range(
+                    d_prime_dict[c] - gamma_dict[c] + 1, d_prime_dict[c] + 1
+                ):
+                    for g in range(0, gamma_dict[c] - (d_prime_dict[c] - d) + 1):
+                        solver.Add(x[c][g][t1][d][t2] == 0)
 
     for c in C_list:
         for t1, t2 in product(T_prime_dict[c], T_prime_dict[c]):

@@ -24,7 +24,7 @@ class ProbInsS21:
     n_configurations: int
     # crop ID -> list of required configuration for each growth day
     crop_growth_day_config: dict[str, list[str]]
-    # shelf ID (type) -> configuration ID -> capaciity
+    # shelf ID (type) -> configuration ID -> capacity
     capacity: dict[str, dict[str, int]]
     # crop ID -> day -> demand
     demand: dict[str, dict[int, int]]
@@ -97,10 +97,16 @@ class ProbInsS21:
         return return_dict
 
     def make_last_demand_date_dict(self) -> dict[str, int]:
-        return {
-            crop_id: max(t_idx_dict.keys())
-            for crop_id, t_idx_dict in self.demand.items()
-        }
+        """
+
+        Returns:
+            dict[str, int]: crop ID -> last demand date
+        """
+        return_dict: dict[str, int] = dict()
+        for crop_id, t_idx_dict in self.demand.items():
+            if t_idx_dict:
+                return_dict[crop_id] = max(t_idx_dict.keys())
+        return return_dict
 
 
 @dataclass(kw_only=True)
@@ -150,7 +156,7 @@ class ProbInsS21T2(ProbInsS21):
             raise ValueError(_str)
 
     @property
-    def shelf_id_list(self):
+    def shelf_id_list(self) -> list[str]:
         return [
             shelf_id
             for shelf_type in self.shelf_type_list
