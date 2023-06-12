@@ -22,6 +22,9 @@ class InputMetadata:
     def set_base_dir(self, meta_dir: PurePath):
         self._base_dir = meta_dir
 
+    def get_abs_dir(self, rel_dir: PurePath) -> Path:
+        return Path(self._base_dir, rel_dir)
+
     def input_dir(self) -> Path:
         return Path(self._base_dir, self.directory)
 

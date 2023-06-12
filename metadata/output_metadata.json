@@ -1,6 +1,6 @@
 {
     "encoding": "utf-8",
-    "directory": "output_data",
+    "directory": "output_data/",
     "crop_schedule_fn_prefix": "crop_sch",
     "crop_schedule_fn_ext": ".xlsx",
     "keystone_val": "crop|day",
