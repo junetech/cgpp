@@ -155,6 +155,7 @@ def generate_p_ins_from_dat(
 
         crop_id_list = [char for char in crop_id_string]
         config_id_list = [config_id_str(idx + 1) for idx in range(n_configurations)]
+        day_list = [idx + 1 for idx in range(n_days)]
 
         crop_growth_days_dict = dict()
         for c_index, crop_id in enumerate(crop_id_list):
@@ -169,9 +170,9 @@ def generate_p_ins_from_dat(
                 if crop_growth_day_config[c_index][growth_day] != -1
             ]
             demand_dict[crop_id] = {
-                demand_day: demand[c_index][demand_day]
-                for demand_day in range(n_days)
-                if demand[c_index][demand_day] > 0
+                demand_day: demand[c_index][day_idx]
+                for day_idx, demand_day in enumerate(day_list)
+                if demand[c_index][day_idx] > 0
             }
 
         # instance to be returned
@@ -261,8 +262,8 @@ def generate_p_ins_from_dat(
                 mdp_dict: dict[str, dict[int, int]] = dict()
                 for c_index, crop_id in enumerate(crop_id_list):
                     mdp_dict[crop_id] = dict()
-                    for demand_day in range(n_days):
-                        penalty_val = missed_demand_penalty[c_index][demand_day]
+                    for day_idx, demand_day in enumerate(day_list):
+                        penalty_val = missed_demand_penalty[c_index][day_idx]
                         if penalty_val > 0:
                             mdp_dict[crop_id][demand_day] = penalty_val
                 p_ins = ProbInsS21T3(
