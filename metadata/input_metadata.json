@@ -8,6 +8,6 @@
     "model_type_t2": "st",
     "model_type_t3": "st_pen",
     "model_type_obj_idx_list_dict": { "st_pen": [ 2 ] },
-    "solver_name": "CBC_MIXED_INTEGER_PROGRAMMING",
+    "solver_name": "SCIP_MIXED_INTEGER_PROGRAMMING",
     "timelimit": 3600
 }
