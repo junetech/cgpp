@@ -21,6 +21,11 @@ N_SHELVES_DICT: dict[int, str] = {7: "small", 9: "medium", 12: "large"}
 DEMAND_MULT_LIST: list[float] = [1.0, 1.2, 1.4, 1.6, 1.8, 2.0]
 TIME_HORIZON_LIST: list[int] = [60, 80, 100]
 
+N_CROPS_COUNT: dict[int, int] = {v: 0 for v in N_CROPS_LIST}
+N_SHELVES_COUNT: dict[str, int] = {v: 0 for v in N_SHELVES_DICT.values()}
+DEMAND_MULT_COUNT: dict[float, int] = {v: 0 for v in DEMAND_MULT_LIST}
+TIME_HORIZON_COUNT: dict[int, int] = {v: 0 for v in TIME_HORIZON_LIST}
+
 
 def shelf_id_str(idx: int) -> str:
     return f"s_{idx}"
@@ -82,7 +87,7 @@ def generate_p_ins_from_dat(
 ) -> Iterable[ProbInsS21]:
     input_path = Path(input_dir)
     fp_list: list[Path] = [fp for fp in input_path.iterdir() if fp.suffix == input_ext]
-    print(f"{len(fp_list)} files found in {input_path}")
+    logging.info(f"{len(fp_list)} files found in {input_path}")
     for fp in fp_list:
         filename = fp.stem
         # instance name information
@@ -104,7 +109,7 @@ def generate_p_ins_from_dat(
             int(filename_info_list[5]),
             "_".join(filename_info_list[6:]),
         )
-        assert demand_mult in DEMAND_MULT_LIST
+        DEMAND_MULT_COUNT[demand_mult] += 1
 
         if model_type not in input_model_type_list:
             continue
@@ -136,22 +141,22 @@ def generate_p_ins_from_dat(
 
         # crop information
         if n_crops != n_crops_fn:
-            print(
+            logging.info(
                 UserWarning(
                     f"n_crops of filename {n_crops_fn} != n_crops of data {n_crops}"
                 )
             )
             continue
-        assert n_crops in N_CROPS_LIST
+        N_CROPS_COUNT[n_crops] += 1
 
         if n_days != n_days_fn:
-            print(
+            logging.info(
                 UserWarning(
                     f"n_days of filename {n_days_fn} != n_days of data {n_days}"
                 )
             )
             continue
-        assert n_days in TIME_HORIZON_LIST
+        TIME_HORIZON_COUNT[n_days] += 1
 
         crop_id_list = [char for char in crop_id_string]
         config_id_list = [config_id_str(idx + 1) for idx in range(n_configurations)]
@@ -182,13 +187,14 @@ def generate_p_ins_from_dat(
         capa_dict: dict[str, dict[str, int]] = dict()
         if model_type == "s":
             if n_shelves != n_shelves_fn:
-                print(
+                logging.info(
                     UserWarning(
                         f"n_shelves of filename {n_shelves_fn} != n_shelves of data {n_shelves}"
                     )
                 )
                 continue
             assert n_shelves in N_SHELVES_DICT.keys()
+            N_SHELVES_COUNT[N_SHELVES_DICT[n_shelves]] += 1
 
             shelf_id_list: list[str] = [
                 shelf_id_str(idx + 1) for idx in range(n_shelves)
@@ -244,6 +250,7 @@ def generate_p_ins_from_dat(
                 idx += shelf_type_count
             n_shelves = idx
             assert n_shelves in N_SHELVES_DICT.keys()
+            N_SHELVES_COUNT[N_SHELVES_DICT[n_shelves]] += 1
 
             cstc_dict: dict[str, dict[str, bool]] = {
                 crop_id: dict() for crop_id in crop_id_list
@@ -325,9 +332,16 @@ def main():
 
     convert_dat_to_json(PurePath(INPUT_DIR), INPUT_EXT, FN_SPLITTER, input_meta)
 
+    logging.info("The number of crops:", N_CROPS_COUNT)
+    logging.info("The capacity by shelves:", N_SHELVES_COUNT)
+    logging.info("Demand multipliers:", DEMAND_MULT_COUNT)
+    logging.info("Time horizons:", TIME_HORIZON_COUNT)
+
     end_d = datetime.datetime.now()
     elapsed_d = end_d - start_d
-    print(f"{__name__} program end @ {end_d}"[:-3] + f"; took total {elapsed_d}"[:-3])
+    logging.info(
+        f"{__name__} program end @ {end_d}"[:-3] + f"; took total {elapsed_d}"[:-3]
+    )
 
 
 if __name__ == "__main__":
