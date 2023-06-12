@@ -1,6 +1,6 @@
 {
     "encoding": "utf-8",
-    "directory": "input_data/json_files/",
+    "directory": "input_data/json_files",
     "input_ext": ".json",
     "input_model_type_list": [ "st_pen" ],
     "fn_splitter": "-",
