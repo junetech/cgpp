@@ -284,6 +284,7 @@ def solve_santini_21_milp_t2_obj2(
 
     # solve
     solver.set_time_limit(timelimit * 1000)
+    solver.SetNumThreads(4)
     status = solver.Solve()
     wall_sec = solver.wall_time() / 1000
 
