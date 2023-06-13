@@ -5,6 +5,7 @@ from input_class import ProbInsS21T3
 from ortools.linear_solver.linear_solver_natural_api import SumArray
 from ortools.linear_solver.pywraplp import Objective, Solver
 from output_class import VariablesObj3
+from silencer import suppress_cffi_out
 
 
 def t_list_before(t: int, t_list: list[int]) -> list[int]:
@@ -80,6 +81,9 @@ def solve_santini_21_milp_t3(
     # pprint(T_prime_dict)
 
     solver: Solver = Solver.CreateSolver(solver_name)
+    solver.set_time_limit(timelimit * 1000)
+    solver.SetNumThreads(4)
+    solver.SuppressOutput()
     infty = Solver.infinity()
 
     # Variables
@@ -254,8 +258,8 @@ def solve_santini_21_milp_t3(
                 solver.Add(y[t][d][k] == 0)
 
     # solve
-    solver.set_time_limit(timelimit * 1000)
-    status = solver.Solve()
+    with suppress_cffi_out():
+        status = solver.Solve()
     wall_sec = solver.wall_time() / 1000
 
     solution = VariablesObj3()

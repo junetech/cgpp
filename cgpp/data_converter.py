@@ -52,30 +52,35 @@ def from_file_to_dict(
     }
 
 
+def write_p_ins_as_json(p_ins: ProbInsS21, output_meta: InputMetadata):
+    output_dir = output_meta.input_dir()
+    output_ext = output_meta.input_ext
+    output_encoding = output_meta.encoding
+
+    fn = f"{p_ins.problem_name}-{p_ins.model_type}{output_ext}"
+    dump_dict = p_ins.make_json_dump_dict()
+    with open(output_dir.joinpath(fn), "w", encoding=output_encoding) as f:
+        json.dump(
+            dump_dict,
+            f,
+            ensure_ascii=False,
+            indent=None,
+            separators=(",", ":"),
+            sort_keys=False,
+        )
+
+
 def convert_dat_to_json(
     input_dir: PurePath, input_ext: str, fn_splitter: str, input_meta: InputMetadata
 ):
     input_abs_dir = input_meta.get_abs_dir(input_dir)
-    output_dir = input_meta.input_dir()
-    output_dir.mkdir(parents=True, exist_ok=True)
-    output_ext = input_meta.input_ext
-    output_encoding = input_meta.encoding
+    input_meta.input_dir().mkdir(parents=True, exist_ok=True)
 
     conversion_count = 0
     for p_ins in generate_p_ins_from_dat(
         input_abs_dir, input_ext, fn_splitter, input_meta.input_model_type_list
     ):
-        fn = f"{p_ins.problem_name}-{p_ins.model_type}{output_ext}"
-        dump_dict = p_ins.make_json_dump_dict()
-        with open(output_dir.joinpath(fn), "w", encoding=output_encoding) as f:
-            json.dump(
-                dump_dict,
-                f,
-                ensure_ascii=False,
-                indent=None,
-                separators=(",", ":"),
-                sort_keys=False,
-            )
+        write_p_ins_as_json(p_ins, input_meta)
         conversion_count += 1
     logging.info(f"{conversion_count} files converted")
     logging.info(f"The number of crops: {N_CROPS_COUNT}")

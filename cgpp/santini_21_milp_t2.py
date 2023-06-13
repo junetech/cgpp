@@ -6,6 +6,7 @@ from input_class import ProbInsS21T2
 from ortools.linear_solver.linear_solver_natural_api import SumArray
 from ortools.linear_solver.pywraplp import Objective, Solver
 from output_class import Variables, VariablesObj2, VariablesObj4
+from silencer import suppress_cffi_out
 
 
 def t_list_before(t: int, t_list: list[int]) -> list[int]:
@@ -101,6 +102,9 @@ def solve_santini_21_milp_t2_obj2(
     # pprint(T_prime_dict)
 
     solver: Solver = Solver.CreateSolver(solver_name)
+    solver.set_time_limit(timelimit * 1000)
+    solver.SetNumThreads(4)
+    solver.SuppressOutput()
     infty = Solver.infinity()
 
     # Variables
@@ -283,9 +287,8 @@ def solve_santini_21_milp_t2_obj2(
             solver.Add(SumArray(y[t][d][k] for t in T_list) >= rhs)
 
     # solve
-    solver.set_time_limit(timelimit * 1000)
-    solver.SetNumThreads(4)
-    status = solver.Solve()
+    with suppress_cffi_out():
+        status = solver.Solve()
     wall_sec = solver.wall_time() / 1000
 
     solution = VariablesObj2()
@@ -419,6 +422,9 @@ def solve_santini_21_milp_t2_obj4(
     # pprint(T_prime_dict)
 
     solver: Solver = Solver.CreateSolver(solver_name)
+    solver.set_time_limit(timelimit * 1000)
+    solver.SetNumThreads(4)
+    solver.SuppressOutput()
     infty = Solver.infinity()
 
     # Variables
@@ -598,8 +604,8 @@ def solve_santini_21_milp_t2_obj4(
             solver.Add(SumArray(y[t][d][k] for t in T_list) >= rhs)
 
     # solve
-    solver.set_time_limit(timelimit * 1000)
-    status = solver.Solve()
+    with suppress_cffi_out():
+        status = solver.Solve()
     wall_sec = solver.wall_time() / 1000
 
     solution = VariablesObj4()
