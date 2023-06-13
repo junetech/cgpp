@@ -1,5 +1,7 @@
+import re
 from dataclasses import dataclass
-from pathlib import PurePath, Path
+from itertools import product
+from pathlib import Path, PurePath
 from typing import Iterable
 
 
@@ -16,6 +18,12 @@ class InputMetadata:
     model_type_t3: str
     model_type_obj_idx_list_dict: dict[str, list[int]]
 
+    n_crops_seq: list[int]
+    n_shelves_seq: list[int]
+    demand_mult_seq: list[float]
+    n_shelves_dict: dict[int, str]
+    time_horizon_seq: list[int]
+
     solver_name: str
     timelimit: int
 
@@ -29,8 +37,19 @@ class InputMetadata:
         return Path(self._base_dir, self.directory)
 
     def input_data_f_loc_iter(self) -> Iterable[Path]:
-        for fp in self.input_dir().iterdir():
-            if fp.suffix == self.input_ext:
+        for n_shelves, n_crops, time_horizon, demand_mult in product(
+            self.n_shelves_seq,
+            self.n_crops_seq,
+            self.time_horizon_seq,
+            self.demand_mult_seq,
+        ):
+            regex_str = f"{n_shelves}-{n_crops}-*"
+            regex_str += "." * n_crops
+            regex_str += f"-{time_horizon}-{demand_mult}-*"
+            fp_list = [
+                fp for fp in self.input_dir().iterdir() if re.match(regex_str, fp.name)
+            ]
+            for fp in fp_list:
                 yield fp
 
     def obj_idx_list(self) -> list[int]:

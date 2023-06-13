@@ -8,6 +8,11 @@
     "model_type_t2": "st",
     "model_type_t3": "st_pen",
     "model_type_obj_idx_list_dict": { "st": [ 2 ] },
+    "n_crops_seq": [ 1, 2, 3, 4, 5, 6 ],
+    "n_shelves_seq": [ 7, 9, 12 ],
+    "n_shelves_dict": { "7": "small", "9": "medium", "12": "large" },
+    "demand_mult_seq": [ 1.0, 1.2, 1.4, 1.6, 1.8, 2.0 ],
+    "time_horizon_seq": [ 60, 80, 100 ],
     "solver_name": "SCIP_MIXED_INTEGER_PROGRAMMING",
     "timelimit": 3600
 }
