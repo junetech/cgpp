@@ -82,7 +82,7 @@ def solve_santini_21_milp_t3(
 
     solver: Solver = Solver.CreateSolver(solver_name)
     solver.set_time_limit(timelimit * 1000)
-    solver.SetNumThreads(4)
+    # solver.SetNumThreads(4)
     solver.SuppressOutput()
     infty = Solver.infinity()
 
