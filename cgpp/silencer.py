@@ -1,12 +1,12 @@
 """http://thesmithfam.org/blog/2012/10/25/temporarily-suppress-console-output-in-python/
 https://stackoverflow.com/questions/36956083/how-can-the-terminal-output-of-executables-run-by-python-functions-be-silenced-i
 """
-import contextlib
 import os
 import sys
+from contextlib import contextmanager
 
 
-@contextlib.contextmanager
+@contextmanager
 def suppress_stdout():
     """
     with suppress_stdout():
@@ -21,7 +21,7 @@ def suppress_stdout():
             sys.stdout = old_stdout
 
 
-@contextlib.contextmanager
+@contextmanager
 def suppress_cffi_out():
     """
     with suppress_cffi_out():

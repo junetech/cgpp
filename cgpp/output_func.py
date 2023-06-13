@@ -246,7 +246,7 @@ def make_santini_21_sch_xlsx(
                     grm_row_list[t_idx] = grm_unit_count
 
                 # growth
-                for g_idx in range(1, gamma_dict[c] + 1):
+                for g_idx in range(1, gamma_dict[crop_id] + 1):
                     growth_t_idx = t_idx + g_idx
                     if growth_t_idx > p_ins.n_days - 1:
                         break
@@ -266,11 +266,11 @@ def make_santini_21_sch_xlsx(
                 hv_unit_count = 0
                 if harvest_t_idx <= p_ins.n_days:
                     hv_unit_count = int(
-                        solution.x[crop_id][gamma_dict[c]][shelf_id][harvest_t_idx - 1][
-                            tau
-                        ]
+                        solution.x[crop_id][gamma_dict[crop_id]][shelf_id][
+                            harvest_t_idx - 1
+                        ][tau]
                     )
-                cfg_id = k_dict[crop_id][gamma_dict[c]]
+                cfg_id = k_dict[crop_id][gamma_dict[crop_id]]
                 last_row_key = f"{t_idx}-{cfg_id}-{shelf_id}"
                 if hv_unit_count > 0:
                     hv_row_list[harvest_t_idx] = hv_unit_count
